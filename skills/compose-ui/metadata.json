@@ -1,0 +1,28 @@
+{
+  "name": "compose-ui",
+  "version": "2.0.0",
+  "author": "piyushverma0",
+  "license": "MIT",
+  "abstract": "Production-complete Jetpack Compose UI skill for Android agents. 24 rules across 10 categories covering state management, edge-to-edge insets, IME keyboard handling, accessibility (a11y), TextField security, Material 3 Expressive theming, loading/error/empty states, adaptive layouts, image loading, and animations.",
+  "categories": [
+    "State Management",
+    "Side Effects",
+    "Layout & Insets",
+    "IME / Keyboard",
+    "Accessibility",
+    "TextField & Forms",
+    "Lists & Performance",
+    "Animations",
+    "Navigation",
+    "Material 3 Theming",
+    "Loading / Error / Empty States",
+    "Adaptive Layouts",
+    "Image Loading & Permissions",
+    "Previews"
+  ],
+  "ruleCount": 24,
+  "minSdk": 24,
+  "composeBom": "2024.09.00",
+  "material3": "Expressive (2025)",
+  "tags": ["android", "kotlin", "jetpack-compose", "material3", "ui", "accessibility", "edge-to-edge"]
+}

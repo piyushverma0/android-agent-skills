@@ -1,0 +1,85 @@
+{
+  "slug": "android-architecture",
+  "name": "android-architecture",
+  "description": "Android MVVM architecture with Unidirectional Data Flow (UDF). Use this skill\nwhen structuring Android projects, designing layers (data/domain/ui), creating\nViewModels, designing Repository interfaces, deciding on UseCase layers, organizing\npackages, handling UiState/UiEvent patterns, navigation with sealed class routes,\ndata model mapping (DTO/domain/UI model), multi-module decisions, or any discussion\nof separation of concerns, Clean Architecture, or Android app structure.",
+  "triggers": [
+    "Clean Architecture",
+    "Repository",
+    "ViewModel",
+    "ViewModels",
+    "deciding on UseCase layers",
+    "designing Repository interfaces",
+    "handling UiState/UiEvent patterns",
+    "or Android app structure.",
+    "when structuring Android projects"
+  ],
+  "topic": [
+    "Layer Structure",
+    "UiState Pattern",
+    "UiEvent Pattern",
+    "Repository Pattern",
+    "ViewModel Structure",
+    "UseCase Layer",
+    "Package Naming",
+    "Data Models",
+    "Multi-Module",
+    "Testing Architecture"
+  ],
+  "tags": [
+    "android",
+    "kotlin",
+    "mvvm",
+    "clean-architecture",
+    "repository",
+    "viewmodel",
+    "udf",
+    "architecture"
+  ],
+  "ruleCountMetadata": 13,
+  "ruleCountRulesDir": 11,
+  "impactCoverage": {
+    "CRITICAL": 5,
+    "HIGH": 4,
+    "MEDIUM": 2,
+    "LOW": 0,
+    "UNSPECIFIED": 0
+  },
+  "references": [
+    {
+      "path": "skills/android-architecture/references/architecture-decisions.md",
+      "title": "Architecture Decision Guide"
+    }
+  ],
+  "commonMistakesHighlights": [],
+  "installSnippet": "npx skills add piyushverma0/android-agent-skills --skill android-architecture",
+  "metadata": {
+    "name": "android-architecture",
+    "version": "1.0.0",
+    "author": "piyushverma0",
+    "license": "MIT",
+    "abstract": "Production-complete Android app architecture for AI agents. Covers MVVM with Unidirectional Data Flow, layer separation (data/domain/ui), Repository pattern, UiState/UiEvent patterns, UseCase layer decisions, ViewModel structure, package naming, multi-module considerations, and testing architecture.",
+    "categories": [
+      "Layer Structure",
+      "UiState Pattern",
+      "UiEvent Pattern",
+      "Repository Pattern",
+      "ViewModel Structure",
+      "UseCase Layer",
+      "Package Naming",
+      "Data Models",
+      "Multi-Module",
+      "Testing Architecture"
+    ],
+    "ruleCount": 13,
+    "tags": [
+      "android",
+      "kotlin",
+      "mvvm",
+      "clean-architecture",
+      "repository",
+      "viewmodel",
+      "udf",
+      "architecture"
+    ]
+  }
+}

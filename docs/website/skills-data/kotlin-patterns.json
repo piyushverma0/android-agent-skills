@@ -1,0 +1,87 @@
+{
+  "slug": "kotlin-patterns",
+  "name": "kotlin-patterns",
+  "description": "Idiomatic Kotlin patterns for Android development. Use this skill when writing\nany Kotlin code for Android \u2014 coroutines, viewModelScope, lifecycleScope,\nDispatchers, withContext, async/await, suspend functions, Flow, StateFlow,\nSharedFlow, stateIn, combine, flatMapLatest, debounce, sealed class, sealed\ninterface, data class, Result, runCatching, null safety, !!, let, apply, also,\nrun, with, lazy, extension functions, collection operators, or CoroutineExceptionHandler.",
+  "triggers": [
+    "Dispatchers",
+    "Flow",
+    "Result",
+    "SharedFlow",
+    "StateFlow",
+    "ViewModel",
+    "flatMapLatest",
+    "lifecycleScope",
+    "or CoroutineExceptionHandler.",
+    "runCatching",
+    "stateIn",
+    "viewModelScope",
+    "withContext"
+  ],
+  "topic": [
+    "Coroutines",
+    "Flow",
+    "Sealed Classes",
+    "Data Classes",
+    "Null Safety",
+    "Scope Functions",
+    "Extension Functions",
+    "Collections",
+    "Delegation",
+    "Anti-Patterns"
+  ],
+  "tags": [
+    "android",
+    "kotlin",
+    "coroutines",
+    "flow",
+    "stateflow",
+    "sealed-class",
+    "null-safety"
+  ],
+  "ruleCountMetadata": 14,
+  "ruleCountRulesDir": 12,
+  "impactCoverage": {
+    "CRITICAL": 4,
+    "HIGH": 4,
+    "MEDIUM": 4,
+    "LOW": 0,
+    "UNSPECIFIED": 0
+  },
+  "references": [
+    {
+      "path": "skills/kotlin-patterns/references/flow-operators-reference.md",
+      "title": "Flow Operators Reference"
+    }
+  ],
+  "commonMistakesHighlights": [],
+  "installSnippet": "npx skills add piyushverma0/android-agent-skills --skill kotlin-patterns",
+  "metadata": {
+    "name": "kotlin-patterns",
+    "version": "1.0.0",
+    "author": "piyushverma0",
+    "license": "MIT",
+    "abstract": "Idiomatic Kotlin patterns for Android development. Covers coroutines, Flow, StateFlow, SharedFlow, sealed classes, data classes, null safety, scope functions, extension functions, and common anti-patterns. All examples are Android-specific and production-tested.",
+    "categories": [
+      "Coroutines",
+      "Flow",
+      "Sealed Classes",
+      "Data Classes",
+      "Null Safety",
+      "Scope Functions",
+      "Extension Functions",
+      "Collections",
+      "Delegation",
+      "Anti-Patterns"
+    ],
+    "ruleCount": 14,
+    "tags": [
+      "android",
+      "kotlin",
+      "coroutines",
+      "flow",
+      "stateflow",
+      "sealed-class",
+      "null-safety"
+    ]
+  }
+}

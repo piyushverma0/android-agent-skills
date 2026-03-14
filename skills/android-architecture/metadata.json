@@ -1,0 +1,21 @@
+{
+  "name": "android-architecture",
+  "version": "1.0.0",
+  "author": "piyushverma0",
+  "license": "MIT",
+  "abstract": "Production-complete Android app architecture for AI agents. Covers MVVM with Unidirectional Data Flow, layer separation (data/domain/ui), Repository pattern, UiState/UiEvent patterns, UseCase layer decisions, ViewModel structure, package naming, multi-module considerations, and testing architecture.",
+  "categories": [
+    "Layer Structure",
+    "UiState Pattern",
+    "UiEvent Pattern",
+    "Repository Pattern",
+    "ViewModel Structure",
+    "UseCase Layer",
+    "Package Naming",
+    "Data Models",
+    "Multi-Module",
+    "Testing Architecture"
+  ],
+  "ruleCount": 13,
+  "tags": ["android", "kotlin", "mvvm", "clean-architecture", "repository", "viewmodel", "udf", "architecture"]
+}

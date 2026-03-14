@@ -11,7 +11,7 @@ npx skills add piyushverma0/android-agent-skills
 
 ## What Is This?
 
-`android-agent-skills` is a collection of **Agent Skills** — reusable instruction sets that teach AI coding agents battle-tested Android/Kotlin patterns. Install once, and every agent you use (Claude Code, Codex, Cursor, Gemini CLI, and 35+ others) automatically follows production Android best practices without you repeating yourself every session.
+`android-agent-skills` is a collection of **Agent Skills** - reusable instruction sets that teach AI coding agents battle-tested Android/Kotlin patterns. Install once, and every agent you use (Claude Code, Codex, Cursor, Gemini CLI, and 35+ others) automatically follows production Android best practices without you repeating yourself every session.
 
 **Without skills:** You explain `persistSession: false` every time you use Supabase. You remind the agent about `collectAsStateWithLifecycle`. You correct `!!` usage repeatedly.
 
@@ -19,7 +19,7 @@ npx skills add piyushverma0/android-agent-skills
 
 ---
 
-## How It Works — The Full Picture
+## How It Works - The Full Picture
 
 ### 1. Installation (one command, one time)
 
@@ -39,9 +39,9 @@ This installs all 5 skills into the correct location for your agent:
 
 The `npx skills` CLI handles all path differences automatically.
 
-### 2. How the Agent Reads Skills — Progressive Disclosure
+### 2. How the Agent Reads Skills - Progressive Disclosure
 
-Skills use a **3-level loading system**. Your agent doesn't dump everything into context at once — it loads only what's needed:
+Skills use a **3-level loading system**. Your agent doesn't dump everything into context at once - it loads only what's needed:
 
 ```
 Level 1: name + description  ← always in context (~50 tokens per skill)
@@ -57,7 +57,7 @@ Level 3: references/ files   ← loaded on demand (unlimited)
 
 **No context penalty.** All 5 skills' names and descriptions cost ~250 tokens total. The full rules only load when actually needed.
 
-### 3. Automatic Triggering — How the Agent Decides
+### 3. Automatic Triggering - How the Agent Decides
 
 The `description` field in each `SKILL.md` is the trigger mechanism. At startup, the agent scans all installed skills and keeps their name + description in its system prompt. When you give a task, the agent matches it against descriptions and loads the relevant skill automatically.
 
@@ -92,7 +92,7 @@ Result: Agent writes the correct auth code on the first attempt
 
 ## Available Skills
 
-### `compose-ui` — 24 rules
+### `compose-ui` - 24 rules
 
 Jetpack Compose UI best practices. Covers everything agents get wrong.
 
@@ -108,7 +108,7 @@ Jetpack Compose UI best practices. Covers everything agents get wrong.
 
 ---
 
-### `supabase-android` — 11 rules
+### `supabase-android` - 11 rules
 
 Supabase Kotlin SDK patterns. Encodes the exact fixes for every common Supabase + Android bug.
 
@@ -126,7 +126,7 @@ const { data } = await userClient.auth.getUser(jwt)  // ← pass jwt directly
 
 ---
 
-### `kotlin-patterns` — 12 rules
+### `kotlin-patterns` - 12 rules
 
 Idiomatic Kotlin for Android production code.
 
@@ -134,7 +134,7 @@ Idiomatic Kotlin for Android production code.
 
 ---
 
-### `hilt-di` — 10 rules
+### `hilt-di` - 10 rules
 
 Hilt dependency injection from setup to testing.
 
@@ -142,7 +142,7 @@ Hilt dependency injection from setup to testing.
 
 ---
 
-### `android-architecture` — 11 rules
+### `android-architecture` - 11 rules
 
 MVVM + Unidirectional Data Flow patterns for Android.
 
@@ -152,7 +152,7 @@ MVVM + Unidirectional Data Flow patterns for Android.
 
 ## Install Options
 
-### All skills, global (recommended — works across all your projects)
+### All skills, global (recommended - works across all your projects)
 ```bash
 npx skills add piyushverma0/android-agent-skills -g
 ```
@@ -314,7 +314,7 @@ Brief explanation of why this matters.
 
 There are 88,000+ skills on skills.sh. Zero are dedicated to Android/Kotlin development.
 
-These skills are built from real production debugging — not documentation summaries. Every rule encodes a mistake that actually happens in production:
+These skills are built from real production debugging - not documentation summaries. Every rule encodes a mistake that actually happens in production:
 
 - The `supabase-android` auth rule fixes a bug that takes 2–4 hours to debug the first time
 - The `compose-ui` edge-to-edge rule prevents content being hidden on Android 15+
@@ -345,8 +345,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and quality checklist.
 
 ## License
 
-MIT — use freely in personal and commercial projects.
+MIT - use freely in personal and commercial projects.
 
 ---
 
-*Built by [piyushverma0](https://github.com/piyushverma0)*
+*Built by [Piyush Verma](https://github.com/piyushverma0)*

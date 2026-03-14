@@ -1,0 +1,21 @@
+{
+  "name": "kotlin-patterns",
+  "version": "1.0.0",
+  "author": "piyushverma0",
+  "license": "MIT",
+  "abstract": "Idiomatic Kotlin patterns for Android development. Covers coroutines, Flow, StateFlow, SharedFlow, sealed classes, data classes, null safety, scope functions, extension functions, and common anti-patterns. All examples are Android-specific and production-tested.",
+  "categories": [
+    "Coroutines",
+    "Flow",
+    "Sealed Classes",
+    "Data Classes",
+    "Null Safety",
+    "Scope Functions",
+    "Extension Functions",
+    "Collections",
+    "Delegation",
+    "Anti-Patterns"
+  ],
+  "ruleCount": 14,
+  "tags": ["android", "kotlin", "coroutines", "flow", "stateflow", "sealed-class", "null-safety"]
+}

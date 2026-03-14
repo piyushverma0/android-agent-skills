@@ -1,26 +1,65 @@
-# Rule: Single UiState data class per screen
-**Impact:** CRITICAL
+# Use a Single UiState Data Class Per Screen
 
-Represent each screen with one immutable `UiState` exposed as `StateFlow`.
+**Impact: CRITICAL**
+
+Multiple `StateFlow`s per screen cause race conditions, partial UI updates, and
+make it impossible to reason about the screen's state atomically.
+
+## Rule
+
+Every screen gets exactly **one** `data class` for its UI state, exposed as a
+single `StateFlow` from the ViewModel.
 
 ```kotlin
-// ❌ Wrong — fragmented state across multiple flows.
+// ✅ Single data class — atomic, copyable, testable
+data class ScanUiState(
+    val isSolving: Boolean = false,
+    val result: ScanSolveResponse? = null,
+    val errorMessage: String? = null,
+    val processingMessage: String = "",
+    val remainingScans: Int = 5,
+    val selectedMode: ScanMode = ScanMode.GENERAL,
+    val isSuperAiEnabled: Boolean = false
+)
+
+// ✅ Single MutableStateFlow in ViewModel
+class ScanViewModel @Inject constructor(...) : ViewModel() {
+    private val _uiState = MutableStateFlow(ScanUiState())
+    val uiState: StateFlow<ScanUiState> = _uiState.asStateFlow()
+
+    // Always update atomically with update{}
+    fun onSolveStart() {
+        _uiState.update { it.copy(isSolving = true, errorMessage = null) }
+    }
+}
+
+// ✅ In Composable — collectAsStateWithLifecycle (not collectAsState)
+val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+```
+
+## Why collectAsStateWithLifecycle, Not collectAsState
+
+`collectAsStateWithLifecycle` pauses collection when the app enters the background,
+saving battery and preventing background work. `collectAsState` collects always —
+even when the screen is invisible.
+
+```kotlin
+// ❌ Collects in background — wastes battery
+val uiState by viewModel.uiState.collectAsState()
+
+// ✅ Pauses when app backgrounded
+val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+```
+
+## Anti-Pattern: Multiple StateFlows
+
+```kotlin
+// ❌ Multiple flows — UI can be in inconsistent intermediate state
 class WrongViewModel : ViewModel() {
-    val title = MutableStateFlow("")
     val isLoading = MutableStateFlow(false)
-}
-
-// ✅ Correct — one UiState object and lifecycle-aware collection.
-data class HomeUiState(val title: String = "", val isLoading: Boolean = false)
-
-class HomeViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(HomeUiState())
-    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
-}
-
-@Composable
-fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-    Text(text = state.title)
+    val result = MutableStateFlow<Result?>(null)
+    val error = MutableStateFlow<String?>(null)
+    // Problem: isLoading=false and result=null and error=null at the same time
+    // is ambiguous — is it initial state or completed with no data?
 }
 ```

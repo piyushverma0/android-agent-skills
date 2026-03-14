@@ -1,0 +1,19 @@
+{
+  "name": "supabase-android",
+  "version": "1.0.0",
+  "author": "piyushverma0",
+  "license": "MIT",
+  "abstract": "Production-complete Supabase Kotlin SDK skill for Android agents. Covers the JWT auth pattern that fixes UnauthorizedRestException, edge function setup, database queries, realtime subscriptions, storage, error handling, and security.",
+  "categories": [
+    "SDK Setup",
+    "Authentication",
+    "Edge Functions",
+    "Database",
+    "Realtime",
+    "Storage",
+    "Error Handling",
+    "Security"
+  ],
+  "ruleCount": 12,
+  "tags": ["android", "kotlin", "supabase", "supabase-kt", "edge-functions", "auth", "jwt"]
+}

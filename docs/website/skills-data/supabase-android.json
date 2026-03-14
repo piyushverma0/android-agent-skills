@@ -1,0 +1,86 @@
+{
+  "slug": "supabase-android",
+  "name": "supabase-android",
+  "description": "Supabase Kotlin SDK (supabase-kt) for Android. Use this skill whenever working\nwith Supabase in Android/Kotlin \u2014 authentication, edge functions, database queries,\nrealtime subscriptions, storage, RPC calls, JWT auth, UnauthorizedRestException,\nFunctionsHttpException, persistSession, getUser(jwt), sessionStatus Flow,\nFunctionsHttpException, config.toml verify_jwt, @Serializable, SerialName,\ndecodeList, body<T>, or any supabase-kt API.",
+  "triggers": [
+    "@Serializable",
+    "FunctionsHttpException",
+    "JWT auth",
+    "RPC calls",
+    "SerialName",
+    "UnauthorizedRestException",
+    "body<T>",
+    "decodeList",
+    "getUser(jwt)",
+    "or any supabase-kt API.",
+    "persistSession",
+    "sessionStatus Flow"
+  ],
+  "topic": [
+    "SDK Setup",
+    "Authentication",
+    "Edge Functions",
+    "Database",
+    "Realtime",
+    "Storage",
+    "Error Handling",
+    "Security"
+  ],
+  "tags": [
+    "android",
+    "kotlin",
+    "supabase",
+    "supabase-kt",
+    "edge-functions",
+    "auth",
+    "jwt"
+  ],
+  "ruleCountMetadata": 12,
+  "ruleCountRulesDir": 11,
+  "impactCoverage": {
+    "CRITICAL": 7,
+    "HIGH": 4,
+    "MEDIUM": 0,
+    "LOW": 0,
+    "UNSPECIFIED": 0
+  },
+  "references": [
+    {
+      "path": "skills/supabase-android/references/auth-flows.md",
+      "title": "Auth Flows Reference"
+    },
+    {
+      "path": "skills/supabase-android/references/edge-functions.md",
+      "title": "Supabase Edge Function Templates"
+    }
+  ],
+  "commonMistakesHighlights": [],
+  "installSnippet": "npx skills add piyushverma0/android-agent-skills --skill supabase-android",
+  "metadata": {
+    "name": "supabase-android",
+    "version": "1.0.0",
+    "author": "piyushverma0",
+    "license": "MIT",
+    "abstract": "Production-complete Supabase Kotlin SDK skill for Android agents. Covers the JWT auth pattern that fixes UnauthorizedRestException, edge function setup, database queries, realtime subscriptions, storage, error handling, and security.",
+    "categories": [
+      "SDK Setup",
+      "Authentication",
+      "Edge Functions",
+      "Database",
+      "Realtime",
+      "Storage",
+      "Error Handling",
+      "Security"
+    ],
+    "ruleCount": 12,
+    "tags": [
+      "android",
+      "kotlin",
+      "supabase",
+      "supabase-kt",
+      "edge-functions",
+      "auth",
+      "jwt"
+    ]
+  }
+}

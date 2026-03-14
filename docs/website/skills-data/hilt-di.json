@@ -1,0 +1,100 @@
+{
+  "slug": "hilt-di",
+  "name": "hilt-di",
+  "description": "Hilt dependency injection for Android. Use this skill whenever working with\nHilt in any Android project \u2014 @HiltViewModel, hiltViewModel(), @AndroidEntryPoint,\n@HiltAndroidApp, @Module, @InstallIn, @Provides, @Binds, @Singleton, @ViewModelScoped,\n@ActivityScoped, @Qualifier, @EntryPoint, EntryPointAccessors, @AssistedInject,\n@HiltWorker, HiltWorkerFactory, @HiltAndroidTest, @UninstallModules, @BindValue,\nSavedStateHandle, CoroutineExceptionHandler, or any Dagger/Hilt compile error.",
+  "triggers": [
+    "@ActivityScoped",
+    "@AndroidEntryPoint",
+    "@AssistedInject",
+    "@BindValue",
+    "@Binds",
+    "@EntryPoint",
+    "@HiltAndroidApp",
+    "@HiltAndroidTest",
+    "@HiltViewModel",
+    "@HiltWorker",
+    "@InstallIn",
+    "@Module",
+    "@Provides",
+    "@Qualifier",
+    "@Singleton",
+    "@UninstallModules",
+    "@ViewModelScoped",
+    "CoroutineExceptionHandler",
+    "EntryPointAccessors",
+    "HiltWorkerFactory",
+    "SavedStateHandle",
+    "ViewModel",
+    "hiltViewModel()",
+    "or any Dagger/Hilt compile error."
+  ],
+  "topic": [
+    "Setup",
+    "Scopes",
+    "Modules",
+    "ViewModels",
+    "Qualifiers",
+    "Entry Points",
+    "Assisted Injection",
+    "WorkManager",
+    "Testing",
+    "Common Errors"
+  ],
+  "tags": [
+    "android",
+    "kotlin",
+    "hilt",
+    "dagger",
+    "dependency-injection",
+    "di",
+    "@HiltViewModel",
+    "@Inject"
+  ],
+  "ruleCountMetadata": 12,
+  "ruleCountRulesDir": 10,
+  "impactCoverage": {
+    "CRITICAL": 6,
+    "HIGH": 3,
+    "MEDIUM": 1,
+    "LOW": 0,
+    "UNSPECIFIED": 0
+  },
+  "references": [
+    {
+      "path": "skills/hilt-di/references/component-hierarchy.md",
+      "title": "Hilt Component Hierarchy Reference"
+    }
+  ],
+  "commonMistakesHighlights": [],
+  "installSnippet": "npx skills add piyushverma0/android-agent-skills --skill hilt-di",
+  "metadata": {
+    "name": "hilt-di",
+    "version": "1.0.0",
+    "author": "piyushverma0",
+    "license": "MIT",
+    "abstract": "Production-complete Hilt dependency injection for Android agents. Covers setup, scopes, @Provides vs @Binds, @HiltViewModel, assisted injection, qualifiers, @EntryPoint, WorkManager integration, and testing with @HiltAndroidTest.",
+    "categories": [
+      "Setup",
+      "Scopes",
+      "Modules",
+      "ViewModels",
+      "Qualifiers",
+      "Entry Points",
+      "Assisted Injection",
+      "WorkManager",
+      "Testing",
+      "Common Errors"
+    ],
+    "ruleCount": 12,
+    "tags": [
+      "android",
+      "kotlin",
+      "hilt",
+      "dagger",
+      "dependency-injection",
+      "di",
+      "@HiltViewModel",
+      "@Inject"
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "design-tokens",
+  "version": "1.0.0",
+  "author": "piyushverma0",
+  "license": "MIT",
+  "abstract": "Complete design system foundation for Android agents. Covers Material You color system, semantic color roles, spacing scale, elevation, shape tokens, typography scale, dark/light themes, brand color integration, and dynamic color. The foundation every other UI skill depends on.",
+  "categories": [
+    "Color System",
+    "Spacing Scale",
+    "Elevation",
+    "Shape Tokens",
+    "Typography Scale",
+    "Dark Mode",
+    "Brand Colors",
+    "Dynamic Color",
+    "Semantic Roles",
+    "Theme Structure"
+  ],
+  "ruleCount": 22,
+  "tags": ["android", "kotlin", "compose", "material3", "design-system", "tokens", "theming", "dark-mode", "material-you"]
+}

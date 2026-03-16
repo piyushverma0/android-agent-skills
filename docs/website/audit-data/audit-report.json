@@ -1,0 +1,292 @@
+{
+  "platform": "ANDROID-SKILL",
+  "globalScore": 86,
+  "globalBadge": "pass",
+  "skills": [
+    {
+      "slug": "android-architecture",
+      "score": 81,
+      "badge": "warn",
+      "completeness": {
+        "frontmatter": {
+          "status": "pass",
+          "message": "YAML frontmatter detected"
+        },
+        "common_mistakes": {
+          "status": "pass",
+          "message": "Common mistakes/anti-pattern guidance found"
+        },
+        "rule_count": {
+          "status": "warn",
+          "message": "metadata.ruleCount=13 rules_dir=11"
+        },
+        "reference_count": {
+          "status": "pass",
+          "message": "references=1"
+        }
+      },
+      "compliance": {
+        "hilt_only": {
+          "status": "pass",
+          "message": "Hilt-aligned guidance"
+        },
+        "flow_over_livedata": {
+          "status": "pass",
+          "message": "Flow-first guidance detected"
+        },
+        "no_deprecated_patterns": {
+          "status": "pass",
+          "message": "No deprecated API patterns detected"
+        }
+      },
+      "freshness": {
+        "last_updated": {
+          "status": "pass",
+          "message": "Timestamp captured from repository files"
+        }
+      },
+      "documentation": {
+        "setup_section": {
+          "status": "warn",
+          "message": "Setup section missing"
+        },
+        "rule_sections": {
+          "status": "pass",
+          "message": "Rule sections detected"
+        },
+        "references_present": {
+          "status": "pass",
+          "message": "Reference files found"
+        }
+      }
+    },
+    {
+      "slug": "compose-ui",
+      "score": 100,
+      "badge": "pass",
+      "completeness": {
+        "frontmatter": {
+          "status": "pass",
+          "message": "YAML frontmatter detected"
+        },
+        "common_mistakes": {
+          "status": "pass",
+          "message": "Common mistakes/anti-pattern guidance found"
+        },
+        "rule_count": {
+          "status": "pass",
+          "message": "metadata.ruleCount=24 rules_dir=24"
+        },
+        "reference_count": {
+          "status": "pass",
+          "message": "references=2"
+        }
+      },
+      "compliance": {
+        "hilt_only": {
+          "status": "pass",
+          "message": "Hilt-aligned guidance"
+        },
+        "flow_over_livedata": {
+          "status": "pass",
+          "message": "Flow-first guidance detected"
+        },
+        "no_deprecated_patterns": {
+          "status": "pass",
+          "message": "No deprecated API patterns detected"
+        }
+      },
+      "freshness": {
+        "last_updated": {
+          "status": "pass",
+          "message": "Timestamp captured from repository files"
+        }
+      },
+      "documentation": {
+        "setup_section": {
+          "status": "pass",
+          "message": "Setup section present"
+        },
+        "rule_sections": {
+          "status": "pass",
+          "message": "Rule sections detected"
+        },
+        "references_present": {
+          "status": "pass",
+          "message": "Reference files found"
+        }
+      }
+    },
+    {
+      "slug": "hilt-di",
+      "score": 81,
+      "badge": "warn",
+      "completeness": {
+        "frontmatter": {
+          "status": "pass",
+          "message": "YAML frontmatter detected"
+        },
+        "common_mistakes": {
+          "status": "pass",
+          "message": "Common mistakes/anti-pattern guidance found"
+        },
+        "rule_count": {
+          "status": "warn",
+          "message": "metadata.ruleCount=12 rules_dir=10"
+        },
+        "reference_count": {
+          "status": "pass",
+          "message": "references=1"
+        }
+      },
+      "compliance": {
+        "hilt_only": {
+          "status": "pass",
+          "message": "Hilt-aligned guidance"
+        },
+        "flow_over_livedata": {
+          "status": "warn",
+          "message": "LiveData mentioned"
+        },
+        "no_deprecated_patterns": {
+          "status": "pass",
+          "message": "No deprecated API patterns detected"
+        }
+      },
+      "freshness": {
+        "last_updated": {
+          "status": "pass",
+          "message": "Timestamp captured from repository files"
+        }
+      },
+      "documentation": {
+        "setup_section": {
+          "status": "pass",
+          "message": "Setup section present"
+        },
+        "rule_sections": {
+          "status": "pass",
+          "message": "Rule sections detected"
+        },
+        "references_present": {
+          "status": "pass",
+          "message": "Reference files found"
+        }
+      }
+    },
+    {
+      "slug": "kotlin-patterns",
+      "score": 81,
+      "badge": "warn",
+      "completeness": {
+        "frontmatter": {
+          "status": "pass",
+          "message": "YAML frontmatter detected"
+        },
+        "common_mistakes": {
+          "status": "pass",
+          "message": "Common mistakes/anti-pattern guidance found"
+        },
+        "rule_count": {
+          "status": "warn",
+          "message": "metadata.ruleCount=14 rules_dir=12"
+        },
+        "reference_count": {
+          "status": "pass",
+          "message": "references=1"
+        }
+      },
+      "compliance": {
+        "hilt_only": {
+          "status": "pass",
+          "message": "Hilt-aligned guidance"
+        },
+        "flow_over_livedata": {
+          "status": "pass",
+          "message": "Flow-first guidance detected"
+        },
+        "no_deprecated_patterns": {
+          "status": "pass",
+          "message": "No deprecated API patterns detected"
+        }
+      },
+      "freshness": {
+        "last_updated": {
+          "status": "pass",
+          "message": "Timestamp captured from repository files"
+        }
+      },
+      "documentation": {
+        "setup_section": {
+          "status": "warn",
+          "message": "Setup section missing"
+        },
+        "rule_sections": {
+          "status": "pass",
+          "message": "Rule sections detected"
+        },
+        "references_present": {
+          "status": "pass",
+          "message": "Reference files found"
+        }
+      }
+    },
+    {
+      "slug": "supabase-android",
+      "score": 90,
+      "badge": "pass",
+      "completeness": {
+        "frontmatter": {
+          "status": "pass",
+          "message": "YAML frontmatter detected"
+        },
+        "common_mistakes": {
+          "status": "pass",
+          "message": "Common mistakes/anti-pattern guidance found"
+        },
+        "rule_count": {
+          "status": "warn",
+          "message": "metadata.ruleCount=12 rules_dir=11"
+        },
+        "reference_count": {
+          "status": "pass",
+          "message": "references=2"
+        }
+      },
+      "compliance": {
+        "hilt_only": {
+          "status": "pass",
+          "message": "Hilt-aligned guidance"
+        },
+        "flow_over_livedata": {
+          "status": "pass",
+          "message": "Flow-first guidance detected"
+        },
+        "no_deprecated_patterns": {
+          "status": "pass",
+          "message": "No deprecated API patterns detected"
+        }
+      },
+      "freshness": {
+        "last_updated": {
+          "status": "pass",
+          "message": "Timestamp captured from repository files"
+        }
+      },
+      "documentation": {
+        "setup_section": {
+          "status": "pass",
+          "message": "Setup section present"
+        },
+        "rule_sections": {
+          "status": "pass",
+          "message": "Rule sections detected"
+        },
+        "references_present": {
+          "status": "pass",
+          "message": "Reference files found"
+        }
+      }
+    }
+  ]
+}

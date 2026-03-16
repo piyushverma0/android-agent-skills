@@ -1,0 +1,285 @@
+{
+  "platform": "ANDROID-SKILL",
+  "installCommand": "npx skills add piyushverma0/android-agent-skills",
+  "repoFacts": {
+    "skills": 5,
+    "rulesFromRulesDirs": 68,
+    "rulesClaimedInReadme": 68,
+    "progressiveDisclosureLevels": 3
+  },
+  "generatedFrom": {
+    "skillsPath": "skills/*/{SKILL.md,metadata.json,rules/*.md,references/*.md}"
+  },
+  "skills": [
+    {
+      "slug": "android-architecture",
+      "name": "android-architecture",
+      "description": "Android MVVM architecture with Unidirectional Data Flow (UDF). Use this skill\nwhen structuring Android projects, designing layers (data/domain/ui), creating\nViewModels, designing Repository interfaces, deciding on UseCase layers, organizing\npackages, handling UiState/UiEvent patterns, navigation with sealed class routes,\ndata model mapping (DTO/domain/UI model), multi-module decisions, or any discussion\nof separation of concerns, Clean Architecture, or Android app structure.",
+      "triggers": [
+        "Clean Architecture",
+        "Repository",
+        "ViewModel",
+        "ViewModels",
+        "deciding on UseCase layers",
+        "designing Repository interfaces",
+        "handling UiState/UiEvent patterns",
+        "or Android app structure.",
+        "when structuring Android projects"
+      ],
+      "topic": [
+        "Layer Structure",
+        "UiState Pattern",
+        "UiEvent Pattern",
+        "Repository Pattern",
+        "ViewModel Structure",
+        "UseCase Layer",
+        "Package Naming",
+        "Data Models",
+        "Multi-Module",
+        "Testing Architecture"
+      ],
+      "tags": [
+        "android",
+        "kotlin",
+        "mvvm",
+        "clean-architecture",
+        "repository",
+        "viewmodel",
+        "udf",
+        "architecture"
+      ],
+      "ruleCountMetadata": 13,
+      "ruleCountRulesDir": 11,
+      "impactCoverage": {
+        "CRITICAL": 5,
+        "HIGH": 4,
+        "MEDIUM": 2,
+        "LOW": 0,
+        "UNSPECIFIED": 0
+      }
+    },
+    {
+      "slug": "compose-ui",
+      "name": "compose-ui",
+      "description": "Jetpack Compose UI best practices for Android (BOM 2024.x, Material 3 Expressive).\nUse this skill for ANY @Composable code \u2014 state management, LazyColumn/LazyRow,\nremember/derivedStateOf, recomposition, Modifier chains, AnimatedVisibility,\nModalBottomSheet, Scaffold, TopAppBar, navigation-compose, edge-to-edge insets,\nIME keyboard handling, accessibility (contentDescription, semantics, TalkBack),\nTextField security, loading/error/empty states, Material 3 theming, dynamic color,\ndark mode, adaptive layouts, WindowSizeClass, HorizontalPager, Coil image loading,\nruntime permissions, LaunchedEffect, DisposableEffect, SharedFlow events, @Preview.",
+      "triggers": [
+        "@Composable",
+        "@Preview",
+        "@Preview.",
+        "AnimatedVisibility",
+        "Coil image loading",
+        "DisposableEffect",
+        "HorizontalPager",
+        "IME keyboard handling",
+        "LaunchedEffect",
+        "LazyColumn/LazyRow",
+        "Material 3 Expressive).",
+        "Material 3 theming",
+        "ModalBottomSheet",
+        "Modifier chains",
+        "Scaffold",
+        "SharedFlow",
+        "SharedFlow events",
+        "TalkBack)",
+        "TextField security",
+        "TopAppBar",
+        "WindowSizeClass",
+        "accessibility (contentDescription",
+        "remember/derivedStateOf"
+      ],
+      "topic": [
+        "State Management",
+        "Side Effects",
+        "Layout & Insets",
+        "IME / Keyboard",
+        "Accessibility",
+        "TextField & Forms",
+        "Lists & Performance",
+        "Animations",
+        "Navigation",
+        "Material 3 Theming",
+        "Loading / Error / Empty States",
+        "Adaptive Layouts",
+        "Image Loading & Permissions",
+        "Previews"
+      ],
+      "tags": [
+        "android",
+        "kotlin",
+        "jetpack-compose",
+        "material3",
+        "ui",
+        "accessibility",
+        "edge-to-edge"
+      ],
+      "ruleCountMetadata": 24,
+      "ruleCountRulesDir": 24,
+      "impactCoverage": {
+        "CRITICAL": 15,
+        "HIGH": 8,
+        "MEDIUM": 1,
+        "LOW": 0,
+        "UNSPECIFIED": 0
+      }
+    },
+    {
+      "slug": "hilt-di",
+      "name": "hilt-di",
+      "description": "Hilt dependency injection for Android. Use this skill whenever working with\nHilt in any Android project \u2014 @HiltViewModel, hiltViewModel(), @AndroidEntryPoint,\n@HiltAndroidApp, @Module, @InstallIn, @Provides, @Binds, @Singleton, @ViewModelScoped,\n@ActivityScoped, @Qualifier, @EntryPoint, EntryPointAccessors, @AssistedInject,\n@HiltWorker, HiltWorkerFactory, @HiltAndroidTest, @UninstallModules, @BindValue,\nSavedStateHandle, CoroutineExceptionHandler, or any Dagger/Hilt compile error.",
+      "triggers": [
+        "@ActivityScoped",
+        "@AndroidEntryPoint",
+        "@AssistedInject",
+        "@BindValue",
+        "@Binds",
+        "@EntryPoint",
+        "@HiltAndroidApp",
+        "@HiltAndroidTest",
+        "@HiltViewModel",
+        "@HiltWorker",
+        "@InstallIn",
+        "@Module",
+        "@Provides",
+        "@Qualifier",
+        "@Singleton",
+        "@UninstallModules",
+        "@ViewModelScoped",
+        "CoroutineExceptionHandler",
+        "EntryPointAccessors",
+        "HiltWorkerFactory",
+        "SavedStateHandle",
+        "ViewModel",
+        "hiltViewModel()",
+        "or any Dagger/Hilt compile error."
+      ],
+      "topic": [
+        "Setup",
+        "Scopes",
+        "Modules",
+        "ViewModels",
+        "Qualifiers",
+        "Entry Points",
+        "Assisted Injection",
+        "WorkManager",
+        "Testing",
+        "Common Errors"
+      ],
+      "tags": [
+        "android",
+        "kotlin",
+        "hilt",
+        "dagger",
+        "dependency-injection",
+        "di",
+        "@HiltViewModel",
+        "@Inject"
+      ],
+      "ruleCountMetadata": 12,
+      "ruleCountRulesDir": 10,
+      "impactCoverage": {
+        "CRITICAL": 6,
+        "HIGH": 3,
+        "MEDIUM": 1,
+        "LOW": 0,
+        "UNSPECIFIED": 0
+      }
+    },
+    {
+      "slug": "kotlin-patterns",
+      "name": "kotlin-patterns",
+      "description": "Idiomatic Kotlin patterns for Android development. Use this skill when writing\nany Kotlin code for Android \u2014 coroutines, viewModelScope, lifecycleScope,\nDispatchers, withContext, async/await, suspend functions, Flow, StateFlow,\nSharedFlow, stateIn, combine, flatMapLatest, debounce, sealed class, sealed\ninterface, data class, Result, runCatching, null safety, !!, let, apply, also,\nrun, with, lazy, extension functions, collection operators, or CoroutineExceptionHandler.",
+      "triggers": [
+        "Dispatchers",
+        "Flow",
+        "Result",
+        "SharedFlow",
+        "StateFlow",
+        "ViewModel",
+        "flatMapLatest",
+        "lifecycleScope",
+        "or CoroutineExceptionHandler.",
+        "runCatching",
+        "stateIn",
+        "viewModelScope",
+        "withContext"
+      ],
+      "topic": [
+        "Coroutines",
+        "Flow",
+        "Sealed Classes",
+        "Data Classes",
+        "Null Safety",
+        "Scope Functions",
+        "Extension Functions",
+        "Collections",
+        "Delegation",
+        "Anti-Patterns"
+      ],
+      "tags": [
+        "android",
+        "kotlin",
+        "coroutines",
+        "flow",
+        "stateflow",
+        "sealed-class",
+        "null-safety"
+      ],
+      "ruleCountMetadata": 14,
+      "ruleCountRulesDir": 12,
+      "impactCoverage": {
+        "CRITICAL": 4,
+        "HIGH": 4,
+        "MEDIUM": 4,
+        "LOW": 0,
+        "UNSPECIFIED": 0
+      }
+    },
+    {
+      "slug": "supabase-android",
+      "name": "supabase-android",
+      "description": "Supabase Kotlin SDK (supabase-kt) for Android. Use this skill whenever working\nwith Supabase in Android/Kotlin \u2014 authentication, edge functions, database queries,\nrealtime subscriptions, storage, RPC calls, JWT auth, UnauthorizedRestException,\nFunctionsHttpException, persistSession, getUser(jwt), sessionStatus Flow,\nFunctionsHttpException, config.toml verify_jwt, @Serializable, SerialName,\ndecodeList, body<T>, or any supabase-kt API.",
+      "triggers": [
+        "@Serializable",
+        "FunctionsHttpException",
+        "JWT auth",
+        "RPC calls",
+        "SerialName",
+        "UnauthorizedRestException",
+        "body<T>",
+        "decodeList",
+        "getUser(jwt)",
+        "or any supabase-kt API.",
+        "persistSession",
+        "sessionStatus Flow"
+      ],
+      "topic": [
+        "SDK Setup",
+        "Authentication",
+        "Edge Functions",
+        "Database",
+        "Realtime",
+        "Storage",
+        "Error Handling",
+        "Security"
+      ],
+      "tags": [
+        "android",
+        "kotlin",
+        "supabase",
+        "supabase-kt",
+        "edge-functions",
+        "auth",
+        "jwt"
+      ],
+      "ruleCountMetadata": 12,
+      "ruleCountRulesDir": 11,
+      "impactCoverage": {
+        "CRITICAL": 7,
+        "HIGH": 4,
+        "MEDIUM": 0,
+        "LOW": 0,
+        "UNSPECIFIED": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "slug": "compose-ui",
+  "name": "compose-ui",
+  "description": "Jetpack Compose UI best practices for Android (BOM 2024.x, Material 3 Expressive).\nUse this skill for ANY @Composable code \u2014 state management, LazyColumn/LazyRow,\nremember/derivedStateOf, recomposition, Modifier chains, AnimatedVisibility,\nModalBottomSheet, Scaffold, TopAppBar, navigation-compose, edge-to-edge insets,\nIME keyboard handling, accessibility (contentDescription, semantics, TalkBack),\nTextField security, loading/error/empty states, Material 3 theming, dynamic color,\ndark mode, adaptive layouts, WindowSizeClass, HorizontalPager, Coil image loading,\nruntime permissions, LaunchedEffect, DisposableEffect, SharedFlow events, @Preview.",
+  "triggers": [
+    "@Composable",
+    "@Preview",
+    "@Preview.",
+    "AnimatedVisibility",
+    "Coil image loading",
+    "DisposableEffect",
+    "HorizontalPager",
+    "IME keyboard handling",
+    "LaunchedEffect",
+    "LazyColumn/LazyRow",
+    "Material 3 Expressive).",
+    "Material 3 theming",
+    "ModalBottomSheet",
+    "Modifier chains",
+    "Scaffold",
+    "SharedFlow",
+    "SharedFlow events",
+    "TalkBack)",
+    "TextField security",
+    "TopAppBar",
+    "WindowSizeClass",
+    "accessibility (contentDescription",
+    "remember/derivedStateOf"
+  ],
+  "topic": [
+    "State Management",
+    "Side Effects",
+    "Layout & Insets",
+    "IME / Keyboard",
+    "Accessibility",
+    "TextField & Forms",
+    "Lists & Performance",
+    "Animations",
+    "Navigation",
+    "Material 3 Theming",
+    "Loading / Error / Empty States",
+    "Adaptive Layouts",
+    "Image Loading & Permissions",
+    "Previews"
+  ],
+  "tags": [
+    "android",
+    "kotlin",
+    "jetpack-compose",
+    "material3",
+    "ui",
+    "accessibility",
+    "edge-to-edge"
+  ],
+  "ruleCountMetadata": 24,
+  "ruleCountRulesDir": 24,
+  "impactCoverage": {
+    "CRITICAL": 15,
+    "HIGH": 8,
+    "MEDIUM": 1,
+    "LOW": 0,
+    "UNSPECIFIED": 0
+  },
+  "references": [
+    {
+      "path": "skills/compose-ui/references/animations.md",
+      "title": "Compose Animations Reference"
+    },
+    {
+      "path": "skills/compose-ui/references/testing.md",
+      "title": "Compose UI Testing Reference"
+    }
+  ],
+  "commonMistakesHighlights": [],
+  "installSnippet": "npx skills add piyushverma0/android-agent-skills --skill compose-ui",
+  "metadata": {
+    "name": "compose-ui",
+    "version": "2.0.0",
+    "author": "piyushverma0",
+    "license": "MIT",
+    "abstract": "Production-complete Jetpack Compose UI skill for Android agents. 24 rules across 10 categories covering state management, edge-to-edge insets, IME keyboard handling, accessibility (a11y), TextField security, Material 3 Expressive theming, loading/error/empty states, adaptive layouts, image loading, and animations.",
+    "categories": [
+      "State Management",
+      "Side Effects",
+      "Layout & Insets",
+      "IME / Keyboard",
+      "Accessibility",
+      "TextField & Forms",
+      "Lists & Performance",
+      "Animations",
+      "Navigation",
+      "Material 3 Theming",
+      "Loading / Error / Empty States",
+      "Adaptive Layouts",
+      "Image Loading & Permissions",
+      "Previews"
+    ],
+    "ruleCount": 24,
+    "minSdk": 24,
+    "composeBom": "2024.09.00",
+    "material3": "Expressive (2025)",
+    "tags": [
+      "android",
+      "kotlin",
+      "jetpack-compose",
+      "material3",
+      "ui",
+      "accessibility",
+      "edge-to-edge"
+    ]
+  }
+}

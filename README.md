@@ -1,17 +1,109 @@
 # android-agent-skills
 
-> The open Android development skills repository for AI coding agents.
+> The open Android development skills repository for AI coding agents.  
 > Built by Android developers, for AI agents building Android apps.
+
+---
+
+## Installation
+
+**Note:** Installation differs by platform. Use the method that matches your agent.
+
+### Claude Code (via CLI)
 
 ```bash
 npx skills add piyushverma0/android-agent-skills
 ```
 
+Or tell Claude Code directly:
+
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/piyushverma0/android-agent-skills/main/.claude/INSTALL.md
+```
+
+**Detailed docs:** [docs/README.claude.md](docs/README.claude.md)
+
+---
+
+### OpenAI Codex
+
+Tell Codex:
+
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/piyushverma0/android-agent-skills/main/.codex/INSTALL.md
+```
+
+**Detailed docs:** [docs/README.codex.md](docs/README.codex.md)
+
+---
+
+### Antigravity
+
+Tell Antigravity:
+
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/piyushverma0/android-agent-skills/main/.antigravity/INSTALL.md
+```
+
+**Detailed docs:** [docs/README.antigravity.md](docs/README.antigravity.md)
+
+---
+
+### Cursor
+
+```bash
+npx skills add piyushverma0/android-agent-skills -a cursor
+```
+
+Or in Cursor Agent chat:
+
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/piyushverma0/android-agent-skills/main/.cursor/INSTALL.md
+```
+
+**Detailed docs:** [docs/README.cursor.md](docs/README.cursor.md)
+
+---
+
+### Gemini CLI
+
+```bash
+npx skills add piyushverma0/android-agent-skills -a gemini
+```
+
+---
+
+### Windsurf / OpenCode
+
+```bash
+npx skills add piyushverma0/android-agent-skills
+```
+
+The CLI auto-detects your agent and installs to the correct path.
+
+---
+
+### All agents at once
+
+```bash
+npx skills add piyushverma0/android-agent-skills --agent '*'
+```
+
+---
+
+### Verify Installation
+
+Start a new session and ask your agent something that should trigger a skill — for example:
+
+> "Create a LazyColumn with a ModalBottomSheet"
+
+The agent should automatically apply `compose-ui` rules without you saying anything extra.
+
 ---
 
 ## What Is This?
 
-`android-agent-skills` is a collection of **Agent Skills** - reusable instruction sets that teach AI coding agents battle-tested Android/Kotlin patterns. Install once, and every agent you use (Claude Code, Codex, Cursor, Gemini CLI, and 35+ others) automatically follows production Android best practices without you repeating yourself every session.
+`android-agent-skills` is a collection of **Agent Skills** — reusable instruction sets that teach AI coding agents battle-tested Android/Kotlin patterns. Install once, and every agent you use (Claude Code, Codex, Cursor, Antigravity, Gemini CLI, and more) automatically follows production Android best practices without you repeating yourself every session.
 
 **Without skills:** You explain `persistSession: false` every time you use Supabase. You remind the agent about `collectAsStateWithLifecycle`. You correct `!!` usage repeatedly.
 
@@ -19,9 +111,9 @@ npx skills add piyushverma0/android-agent-skills
 
 ---
 
-## How It Works - The Full Picture
+## How It Works
 
-### 1. Installation (one command, one time)
+### 1. Install (one time)
 
 ```bash
 npx skills add piyushverma0/android-agent-skills
@@ -30,18 +122,19 @@ npx skills add piyushverma0/android-agent-skills
 This installs all 5 skills into the correct location for your agent:
 
 | Agent | Install path |
-|---|---|
+| --- | --- |
 | Claude Code | `~/.claude/skills/` (global) or `.claude/skills/` (project) |
 | Codex | `~/.codex/skills/` (global) or `.codex/skills/` (project) |
 | Cursor | `~/.cursor/skills/` or `.cursor/skills/` |
+| Antigravity | `~/.antigravity/skills/` or `.antigravity/skills/` |
 | Gemini CLI | `~/.gemini/skills/` |
-| OpenCode, Windsurf | auto-detected by CLI |
+| Windsurf / OpenCode | auto-detected by CLI |
 
-The `npx skills` CLI handles all path differences automatically.
+---
 
-### 2. How the Agent Reads Skills - Progressive Disclosure
+### 2. Progressive Disclosure — No Context Penalty
 
-Skills use a **3-level loading system**. Your agent doesn't dump everything into context at once - it loads only what's needed:
+Skills use a 3-level loading system. Your agent doesn't dump everything into context at once:
 
 ```
 Level 1: name + description  ← always in context (~50 tokens per skill)
@@ -52,16 +145,17 @@ Level 2: Full SKILL.md body  ← loaded when triggered (~2,000 tokens)
 
 Level 3: references/ files   ← loaded on demand (unlimited)
          Agent reads these only when the task needs deep detail.
-         Example: animations.md loaded only when you're adding animations.
 ```
 
-**No context penalty.** All 5 skills' names and descriptions cost ~250 tokens total. The full rules only load when actually needed.
+All 5 skills' names and descriptions cost ~250 tokens total. The full rules only load when actually needed.
 
-### 3. Automatic Triggering - How the Agent Decides
+---
 
-The `description` field in each `SKILL.md` is the trigger mechanism. At startup, the agent scans all installed skills and keeps their name + description in its system prompt. When you give a task, the agent matches it against descriptions and loads the relevant skill automatically.
+### 3. Automatic Triggering
 
-**Example trigger chain:**
+The `description` field in each `SKILL.md` is the trigger mechanism. When you give a task, the agent matches it against descriptions and loads the relevant skill automatically.
+
+**Example:**
 
 ```
 You type:  "Fix the UnauthorizedRestException from my edge function"
@@ -73,12 +167,14 @@ Agent loads: skills/supabase-android/SKILL.md
 
 Agent follows: Rule 1 — persistSession: false + getUser(jwt) pattern
 
-Result: Agent writes the correct auth code on the first attempt
+Result: Correct auth code on the first attempt.
 ```
 
-**You never have to say "use the skill" or manually invoke anything.** The description keywords do the matching automatically.
+You never have to say "use the skill" or manually invoke anything.
 
-### 4. Manual Invocation (when you want explicit control)
+---
+
+### 4. Manual Invocation
 
 ```bash
 # Claude Code — invoke a specific skill directly
@@ -92,41 +188,33 @@ Result: Agent writes the correct auth code on the first attempt
 
 ## Available Skills
 
-### `compose-ui` - 24 rules
+### `compose-ui` — 24 rules
 
 Jetpack Compose UI best practices. Covers everything agents get wrong.
 
 **Auto-triggers when you mention:** `@Composable`, `LazyColumn`, `remember`, `StateFlow`, `LaunchedEffect`, `ModalBottomSheet`, `Scaffold`, `AnimatedVisibility`, `collectAsStateWithLifecycle`, `recomposition`, edge-to-edge, IME keyboard, accessibility, Material 3, `WindowSizeClass`, Coil, camera permissions.
 
-**Rules by impact:**
-
-| Impact | Rules |
-|---|---|
-| CRITICAL | Edge-to-edge insets, IME keyboard, Scaffold innerPadding, BottomSheet nav bar, single UiState class, SharedFlow events, remember variants, no logic in composition, LaunchedEffect key, DisposableEffect, accessibility semantics, TextField security, loading/error/empty states, Material 3 theming |
-| HIGH | LazyColumn stable keys, contentPadding, Modifier order, AnimatedVisibility specs, type-safe navigation, adaptive layouts, Coil image loading, runtime permissions |
-| MEDIUM | Multi-preview annotations |
-
 ---
 
-### `supabase-android` - 11 rules
+### `supabase-android` — 11 rules
 
 Supabase Kotlin SDK patterns. Encodes the exact fixes for every common Supabase + Android bug.
 
 **Auto-triggers when you mention:** `supabase-kt`, `UnauthorizedRestException`, `FunctionsHttpException`, `persistSession`, `getUser(jwt)`, `functions.invoke()`, `sessionStatus`, `config.toml`, `verify_jwt`, `@Serializable`, `decodeList`, `realtime`, storage.
 
 **The #1 rule this skill teaches:**
-```typescript
+
+```kotlin
 // The exact pattern that fixes UnauthorizedRestException
-const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-  global: { headers: { Authorization: `Bearer ${jwt}` } },
-  auth:   { persistSession: false },   // ← without this, getUser() returns null
-})
-const { data } = await userClient.auth.getUser(jwt)  // ← pass jwt directly
+val userClient = createSupabaseClient(supabaseUrl, supabaseAnonKey) {
+    install(Auth) { persistSession = false }   // ← without this, getUser() returns null
+}
+val user = userClient.auth.getUser(jwt)        // ← pass jwt directly
 ```
 
 ---
 
-### `kotlin-patterns` - 12 rules
+### `kotlin-patterns` — 12 rules
 
 Idiomatic Kotlin for Android production code.
 
@@ -134,7 +222,7 @@ Idiomatic Kotlin for Android production code.
 
 ---
 
-### `hilt-di` - 10 rules
+### `hilt-di` — 10 rules
 
 Hilt dependency injection from setup to testing.
 
@@ -142,27 +230,43 @@ Hilt dependency injection from setup to testing.
 
 ---
 
-### `android-architecture` - 11 rules
+### `android-architecture` — 11 rules
 
 MVVM + Unidirectional Data Flow patterns for Android.
 
-**Auto-triggers when you mention:** `ViewModel`, `Repository`, `UseCase`, `UiState`, `UiEvent`, data layer, domain layer, presentation layer, `data class`, `sealed class`, package structure, navigation, multi-module, or any discussion of app architecture and separation of concerns.
+**Auto-triggers when you mention:** `ViewModel`, `Repository`, `UseCase`, `UiState`, `UiEvent`, data layer, domain layer, presentation layer, `data class`, `sealed class`, package structure, navigation, multi-module, or any discussion of app architecture.
+
+---
+
+## Total Coverage
+
+| Skill | Rules | Files |
+| --- | --- | --- |
+| `compose-ui` | 24 rules | 28 files |
+| `supabase-android` | 11 rules | 15 files |
+| `kotlin-patterns` | 12 rules | 15 files |
+| `hilt-di` | 10 rules | 13 files |
+| `android-architecture` | 11 rules | 14 files |
+| **Total** | **68 rules** | **85 files** |
 
 ---
 
 ## Install Options
 
-### All skills, global (recommended - works across all your projects)
+### All skills, global (recommended)
+
 ```bash
 npx skills add piyushverma0/android-agent-skills -g
 ```
 
 ### All skills, current project only
+
 ```bash
 npx skills add piyushverma0/android-agent-skills
 ```
 
 ### Specific skills only
+
 ```bash
 npx skills add piyushverma0/android-agent-skills \
   --skill supabase-android \
@@ -170,51 +274,57 @@ npx skills add piyushverma0/android-agent-skills \
 ```
 
 ### Target a specific agent
+
 ```bash
 npx skills add piyushverma0/android-agent-skills -a claude-code
 npx skills add piyushverma0/android-agent-skills -a codex
 npx skills add piyushverma0/android-agent-skills -a cursor
+npx skills add piyushverma0/android-agent-skills -a antigravity
 npx skills add piyushverma0/android-agent-skills -a gemini
-npx skills add piyushverma0/android-agent-skills --agent '*'  # all agents
+npx skills add piyushverma0/android-agent-skills --agent '*'   # all agents
 ```
 
-### Team onboarding (non-interactive, CI-friendly)
+### Team onboarding (CI-friendly)
+
 ```bash
 npx skills add piyushverma0/android-agent-skills --all -a claude-code -y
 ```
 
 ### Check for updates
+
 ```bash
 npx skills check
 npx skills update
 ```
 
 ### Remove skills
+
 ```bash
-npx skills remove compose-ui            # remove one
-npx skills remove --all                 # remove all
+npx skills remove compose-ui   # remove one
+npx skills remove --all        # remove all
 ```
 
 ---
 
 ## Supported Agents
 
-| Agent | Supported | Notes |
-|---|---|---|
-| Claude Code | ✅ | Auto-loads from `~/.claude/skills/` or `.claude/skills/` |
-| OpenAI Codex | ✅ | Reads from `~/.codex/skills/` |
-| Cursor | ✅ | Reads from project-level or global skills folder |
-| Gemini CLI | ✅ | Announced Agent Skills compatibility |
-| Windsurf | ✅ | Auto-detected by CLI |
-| OpenCode | ✅ | Auto-detected by CLI |
-| GitHub Copilot | ✅ | Via skills CLI |
-| Kiro | ⚠️ | Manual setup: add paths to `.kiro/agents/<agent>.json` |
+| Agent | Supported | Install method |
+| --- | --- | --- |
+| Claude Code | ✅ | `npx skills add` or fetch INSTALL.md |
+| OpenAI Codex | ✅ | fetch INSTALL.md |
+| Cursor | ✅ | `npx skills add` or fetch INSTALL.md |
+| Antigravity | ✅ | fetch INSTALL.md |
+| Gemini CLI | ✅ | `npx skills add` |
+| Windsurf | ✅ | `npx skills add` (auto-detected) |
+| OpenCode | ✅ | `npx skills add` (auto-detected) |
+| GitHub Copilot | ✅ | `npx skills add` |
+| Kiro | ⚠️ | Manual: add paths to `.kiro/agents/<agent>.json` |
 
 ---
 
 ## Real-World Examples
 
-### Example 1: Supabase edge function (supabase-android triggers)
+### Supabase edge function (supabase-android triggers)
 
 ```
 You:   "Write an edge function that verifies the user's JWT"
@@ -222,13 +332,13 @@ You:   "Write an edge function that verifies the user's JWT"
 Without skill: Agent writes getUser() without jwt arg, missing persistSession: false
                → UnauthorizedRestException in production
 
-With skill:    Agent writes the exact correct pattern on first attempt:
-               - persistSession: false in createClient
+With skill:    Exact correct pattern on first attempt:
+               - persistSession = false in createSupabaseClient
                - getUser(jwt) with jwt passed directly
                - config.toml with verify_jwt = false
 ```
 
-### Example 2: Compose screen (compose-ui triggers)
+### Compose screen (compose-ui triggers)
 
 ```
 You:   "Create a screen with a list of questions and a bottom sheet result"
@@ -243,7 +353,7 @@ With skill:    - Scaffold with innerPadding consumed on LazyColumn
                - collectAsStateWithLifecycle (not collectAsState)
 ```
 
-### Example 3: Hilt setup (hilt-di triggers)
+### Hilt setup (hilt-di triggers)
 
 ```
 You:   "Set up Hilt and inject my ScanRepository into the ViewModel"
@@ -260,65 +370,31 @@ With skill:    - KSP plugin (not kapt)
 
 ---
 
-## File Structure
+## Why This Exists
 
-Each skill follows the same structure:
+There are 88,000+ skills on skills.sh. Zero are dedicated to Android/Kotlin development.
+
+These skills are built from real production debugging — not documentation summaries. Every rule encodes a mistake that actually happens in production:
+
+- The `supabase-android` auth rule fixes a bug that takes 2–4 hours to debug the first time
+- The `compose-ui` edge-to-edge rule prevents content being hidden on Android 15+
+- The `hilt-di` common errors rule maps every cryptic Dagger error to its exact fix
+
+---
+
+## File Structure
 
 ```
 skills/<skill-name>/
 ├── SKILL.md          ← compiled main file (what the agent reads when triggered)
 ├── metadata.json     ← version, author, rule count
-├── rules/            ← individual rule files (one per rule, source of truth)
+├── rules/            ← individual rule files (source of truth)
 │   ├── rule-name.md  ← Impact level + full examples + anti-patterns
 │   └── ...
 └── references/       ← deep-dive files loaded on demand
     ├── topic.md
     └── ...
 ```
-
-### Rule file format
-
-Each rule in `rules/` follows:
-```markdown
-# Rule Name
-
-**Impact: CRITICAL | HIGH | MEDIUM | LOW**
-
-Brief explanation of why this matters.
-
-## Rule
-
-✅ correct code example
-
-❌ wrong code example with explanation
-
-## Anti-Patterns (common mistakes)
-```
-
----
-
-## Total Coverage
-
-| Skill | Rules | Files |
-|---|---|---|
-| `compose-ui` | 24 rules | 28 files |
-| `supabase-android` | 11 rules | 15 files |
-| `kotlin-patterns` | 12 rules | 15 files |
-| `hilt-di` | 10 rules | 13 files |
-| `android-architecture` | 11 rules | 14 files |
-| **Total** | **68 rules** | **85 files** |
-
----
-
-## Why This Exists
-
-There are 88,000+ skills on skills.sh. Zero are dedicated to Android/Kotlin development.
-
-These skills are built from real production debugging - not documentation summaries. Every rule encodes a mistake that actually happens in production:
-
-- The `supabase-android` auth rule fixes a bug that takes 2–4 hours to debug the first time
-- The `compose-ui` edge-to-edge rule prevents content being hidden on Android 15+
-- The `hilt-di` common errors rule maps every cryptic Dagger error to its exact fix
 
 ---
 
@@ -343,9 +419,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and quality checklist.
 
 ---
 
+## Updating
+
+```bash
+npx skills update
+```
+
+---
+
 ## License
 
-MIT - use freely in personal and commercial projects.
+MIT — use freely in personal and commercial projects.
 
 ---
 

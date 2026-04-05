@@ -1,319 +1,278 @@
 ---
-name: kotlin-patterns
+name: hilt-di
 description: |
-  Idiomatic Kotlin patterns for Android development. Use this skill when writing
-  any Kotlin code for Android — coroutines, viewModelScope, lifecycleScope,
-  Dispatchers, withContext, async/await, suspend functions, Flow, StateFlow,
-  SharedFlow, stateIn, combine, flatMapLatest, debounce, sealed class, sealed
-  interface, data class, Result, runCatching, null safety, !!, let, apply, also,
-  run, with, lazy, extension functions, collection operators, or CoroutineExceptionHandler.
+  Hilt dependency injection for Android AI agents. Use this skill whenever setting up Hilt,
+  writing @HiltViewModel, @AndroidEntryPoint, @HiltAndroidApp, @Module, @InstallIn, @Provides,
+  @Binds, @Singleton, @ViewModelScoped, @ActivityScoped, @EntryPoint, @AssistedInject,
+  @HiltWorker, @HiltAndroidTest, @BindValue, or debugging any Dagger/Hilt compile error.
+  Also applies when choosing between @Provides vs @Binds, scoping dependencies, injecting
+  into non-Hilt classes, or setting up Hilt for testing. Always use this skill before
+  writing any @Module, @HiltViewModel, or @AndroidEntryPoint.
 ---
 
-# Kotlin Patterns for Android
+# Hilt Dependency Injection
 
-Production-complete Kotlin patterns. 14 rules across 7 categories, ordered by impact.
+10 rules that fix what AI agents consistently get wrong with Hilt.
 
----
-
-## CRITICAL — Coroutines
-
-### Rule 1: Use the Correct Scope
+## Setup — required before any injection works
 
 ```kotlin
-class MyViewModel : ViewModel() {
-    fun load() { viewModelScope.launch { ... } }         // ← auto-cancelled on VM clear
+// MyApplication.kt — REQUIRED, must be declared in AndroidManifest
+@HiltAndroidApp
+class MyApplication : Application()
+
+// AndroidManifest.xml
+<application android:name=".MyApplication" ...>
+```
+
+```kotlin
+// build.gradle.kts — use KSP, never kapt
+plugins {
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
-class MyFragment : Fragment() {
-    override fun onViewCreated(...) {
-        lifecycleScope.launch { viewModel.state.collect { render(it) } }
+dependencies {
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)                          // ← ksp, not kapt
+    implementation(libs.androidx.hilt.navigation.compose)
+}
+```
+
+## Rule 1: @Binds over @Provides for interface binding
+
+```kotlin
+// ✅ @Binds — zero runtime overhead, compiler-verified
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class RepositoryModule {
+    @Binds
+    @Singleton
+    abstract fun bindItemRepository(impl: ItemRepositoryImpl): ItemRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindUserRepository(impl: UserRepositoryImpl): UserRepository
+}
+
+// ❌ @Provides for interface — works but is less efficient
+@Module
+@InstallIn(SingletonComponent::class)
+object RepositoryModule {
+    @Provides
+    @Singleton
+    fun provideItemRepository(impl: ItemRepositoryImpl): ItemRepository = impl
+}
+```
+
+## Rule 2: @Provides for third-party / constructed objects
+
+```kotlin
+// ✅ @Provides when you control construction
+@Module
+@InstallIn(SingletonComponent::class)
+object NetworkModule {
+    @Provides
+    @Singleton
+    fun provideOkHttpClient(): OkHttpClient =
+        OkHttpClient.Builder()
+            .addInterceptor(HttpLoggingInterceptor().apply { level = Level.BODY })
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit =
+        Retrofit.Builder()
+            .baseUrl(BuildConfig.BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(Json.asConverterFactory("application/json".toMediaType()))
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideItemApiService(retrofit: Retrofit): ItemApiService =
+        retrofit.create(ItemApiService::class.java)
+}
+```
+
+## Rule 3: Scope correctly
+
+```kotlin
+// @Singleton — one instance for app lifetime
+@Binds @Singleton abstract fun bindRepo(impl: RepoImpl): Repo
+
+// @ActivityRetainedScoped — survives rotation, dies with activity backstack
+// (default for @HiltViewModel — don't re-declare it)
+
+// @ViewModelScoped — tied to ViewModel lifetime
+@Binds @ViewModelScoped abstract fun bindSomeHelper(impl: SomeHelperImpl): SomeHelper
+
+// @ActivityScoped — tied to Activity lifetime (rare)
+@Binds @ActivityScoped abstract fun bindNavigator(impl: NavigatorImpl): Navigator
+
+// ❌ Injecting @Singleton into @ViewModelScoped — scope violation, Dagger error
+```
+
+## Rule 4: @HiltViewModel — correct pattern
+
+```kotlin
+// ✅ ViewModel injection
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    private val getItems: GetItemsUseCase,
+    private val savedStateHandle: SavedStateHandle  // free with Hilt
+) : ViewModel() { ... }
+
+// ✅ In Composable — always hiltViewModel(), never viewModel()
+@Composable
+fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { ... }
+
+// ✅ Scoped to NavGraph entry
+@Composable
+fun CheckoutFlow(navController: NavController) {
+    val parentEntry = remember(navController) {
+        navController.getBackStackEntry(CheckoutRoute)
     }
+    val viewModel: CheckoutViewModel = hiltViewModel(parentEntry)
 }
-@Composable fun Screen() {
-    val scope = rememberCoroutineScope()
-    Button(onClick = { scope.launch { doWork() } }) { Text("Go") }
-}
-suspend fun loadBoth() = coroutineScope {             // ← structured, waits for children
-    val a = async { repository.getA() }
-    val b = async { repository.getB() }
-    a.await() to b.await()
-}
-// ❌ GlobalScope — leaks, no lifecycle     ❌ runBlocking — blocks thread, ANR risk
 ```
 
-### Rule 2: Always Specify Dispatcher in Repository
+## Rule 5: @AndroidEntryPoint on all Android classes that inject
 
 ```kotlin
-// ✅ Inject dispatcher for testability
-class ScanRepositoryImpl @Inject constructor(
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
-) : ScanRepository {
-    override suspend fun getQuestions() = withContext(ioDispatcher) {
-        supabase.from("questions").select().decodeList<Question>()
-    }
+// ✅ Required on: Activity, Fragment, View, Service, BroadcastReceiver
+@AndroidEntryPoint
+class MainActivity : ComponentActivity() {
+    @Inject lateinit var analyticsTracker: AnalyticsTracker
 }
 
-withContext(Dispatchers.IO)      { /* network, database, file I/O */ }
-withContext(Dispatchers.Default) { /* CPU-heavy: sorting, parsing */ }
-// ❌ Dispatchers.IO directly in ViewModel — bypasses Repository
-// ❌ Hardcoded Dispatchers in Repository — use @IoDispatcher qualifier for testing
-```
-
-### Rule 3: Exception Handling
-
-```kotlin
-// ✅ runCatching — for expected failures (network, parse errors)
-fun solve(question: String) {
-    viewModelScope.launch {
-        runCatching { repository.scanSolve(question) }
-            .onSuccess { _uiState.update { s -> s.copy(result = it) } }
-            .onFailure { _uiState.update { s -> s.copy(errorMessage = it.message) } }
-    }
+@AndroidEntryPoint
+class NotificationService : Service() {
+    @Inject lateinit var notificationHandler: NotificationHandler
 }
 
-// ✅ CoroutineExceptionHandler — for uncaught exceptions in launch
-private val handler = CoroutineExceptionHandler { _, t ->
-    _uiState.update { it.copy(errorMessage = t.message) }
+// ❌ Forgetting @AndroidEntryPoint — results in lateinit not initialized crash
+class MainActivity : ComponentActivity() {
+    @Inject lateinit var analyticsTracker: AnalyticsTracker  // CRASH: not injected
 }
-viewModelScope.launch(handler) { riskyWork() }
-
-// ✅ Never swallow CancellationException — rethrow it
-try { delay(1000) } catch (e: CancellationException) { throw e } catch (e: Exception) { handle(e) }
-// ❌ CoroutineExceptionHandler on async — doesn't work (exception deferred to await())
 ```
 
----
-
-## CRITICAL — Flow
-
-### Rule 4: StateFlow for UI State, SharedFlow for Events
+## Rule 6: @EntryPoint for non-Hilt classes
 
 ```kotlin
-// ✅ StateFlow — UI state (replays current value to new collectors)
-private val _uiState = MutableStateFlow(QuestionListUiState())
-val uiState: StateFlow<QuestionListUiState> = _uiState.asStateFlow()
-_uiState.update { it.copy(isLoading = false, questions = newQuestions) }
-
-// ✅ Convert cold Flow to hot StateFlow
-val questions = repository.observeQuestions()
-    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-//                                                          ↑ 5s grace for config change
-
-// ✅ SharedFlow — one-shot events (navigation, toasts — NEVER in UiState)
-private val _events = MutableSharedFlow<AppEvent>()
-val events: SharedFlow<AppEvent> = _events.asSharedFlow()
-// Collect: LaunchedEffect(Unit) { viewModel.events.collect { ... } }
-
-// ❌ SharedFlow for UI state — new collectors miss current value (blank screen)
-// ❌ StateFlow for events — re-fires on rotation
-// ❌ collectAsState — collects in background, wastes battery
-// ✅ collectAsStateWithLifecycle — pauses when backgrounded
-```
-
-### Rule 5: Key Flow Operators
-
-```kotlin
-// flatMapLatest — cancel previous on new input (search boxes)
-val results = searchQuery
-    .debounce(300)
-    .flatMapLatest { query -> repository.search(query) }
-
-// combine — emit when EITHER flow emits (merging UI state)
-val dashState = combine(questionsFlow, userFlow, quotaFlow) { q, u, quota ->
-    DashboardUiState(questions = q, user = u, quota = quota)
-}.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())
-
-// catch — handle errors without terminating the stream
-repository.observeQuestions()
-    .catch { error -> Timber.e(error); emit(emptyList()) }
-    .stateIn(...)
-
-// distinctUntilChanged — skip repeated equal emissions
-uiState.map { it.isLoading }.distinctUntilChanged().collect { ... }
-
-// flowOn — change upstream dispatcher
-flow { emit(database.query()) }.flowOn(Dispatchers.IO)
-```
-
----
-
-## CRITICAL — Sealed Classes
-
-### Rule 6: Sealed Interface for State and Events
-
-```kotlin
-// ✅ All states explicit — compiler forces exhaustive when
-sealed interface UiState {
-    object Loading : UiState
-    data class Success(val data: List<Question>) : UiState
-    data class Error(val message: String, val isRetryable: Boolean = true) : UiState
-    object Empty : UiState
+// ✅ Access Hilt graph from classes Hilt doesn't manage
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+interface AnalyticsEntryPoint {
+    fun analyticsTracker(): AnalyticsTracker
 }
 
-when (val state = uiState) {
-    UiState.Loading    -> LoadingIndicator()
-    is UiState.Success -> QuestionList(state.data)
-    is UiState.Error   -> ErrorView(state.message, state.isRetryable)
-    UiState.Empty      -> EmptyView()
-}   // ← no else needed — compiler verifies exhaustiveness
-
-// ✅ Result<T> for Repository returns
-suspend fun scanSolve(q: String): Result<ScanSolveResponse> = runCatching {
-    supabase.functions.invoke("scan-solve-question", ...).body()
-}
-// ❌ Nullable returns — null = not found OR error? Ambiguous.
-// ❌ else in sealed when — silently skips new states added later
-```
-
----
-
-## HIGH — Data Classes
-
-### Rule 7: All Val, Update via copy()
-
-```kotlin
-// ✅ Immutable data class — all val, defaults for optional fields
-data class ScanUiState(
-    val isLoading: Boolean = false,
-    val result: ScanResult? = null,
-    val errorMessage: String? = null
+// Usage in a ContentProvider or non-Hilt class
+val entryPoint = EntryPointAccessors.fromApplication(
+    context.applicationContext,
+    AnalyticsEntryPoint::class.java
 )
-
-// ✅ Update via update{} + copy() — atomic, StateFlow detects change
-_uiState.update { it.copy(isLoading = true, errorMessage = null) }
-
-// ✅ Separate models for each layer
-// QuestionDto    (@Serializable, matches DB)    ← data layer
-// Question       (pure Kotlin domain model)     ← domain layer
-// QuestionItem   (display model with formatted strings) ← UI layer
-fun QuestionDto.toDomain() = Question(id, text, Subject.from(subject))
-
-// ❌ var in data class — breaks StateFlow equality, enables unwanted mutation
-// ❌ MutableList in data class — StateFlow won't detect changes
+val tracker = entryPoint.analyticsTracker()
 ```
 
----
-
-## HIGH — Null Safety
-
-### Rule 8: Never !! — Safe Alternatives
+## Rule 7: @AssistedInject for runtime parameters
 
 ```kotlin
-// ❌ !! crashes with no context
-val id = user!!.profile!!.id!!
+// ✅ When ViewModel needs a runtime value (e.g., item ID from nav args)
+@HiltViewModel(assistedFactory = DetailViewModel.Factory::class)
+class DetailViewModel @AssistedInject constructor(
+    @Assisted val itemId: String,
+    private val getItem: GetItemUseCase
+) : ViewModel() {
 
-// ✅ Safe call chain
-val id = user?.profile?.id
-
-// ✅ Elvis operator
-val id = user?.profile?.id ?: return            // early exit
-val id = user?.profile?.id ?: ""               // fallback
-val id = user?.profile?.id
-    ?: throw IllegalStateException("No authenticated user")
-
-// ✅ requireNotNull — meaningful crash message (programming errors only)
-val apiKey = requireNotNull(BuildConfig.API_KEY) { "API_KEY missing in local.properties" }
-
-// ✅ let for nullable operations
-user?.let { analytics.setUser(it.id, it.name) }
-
-// ✅ Smart cast on val (not var)
-val current = user
-if (current != null) { process(current.id) }   // smart cast works on val
-```
-
----
-
-## MEDIUM — Scope Functions
-
-### Rule 9: Right Function for Each Use Case
-
-```kotlin
-let  { it  → returns lambda result } // null check + transform
-run  { this → returns lambda result } // init + return result (let + with combined)
-apply{ this → returns receiver      } // object configuration during construction
-also { it  → returns receiver       } // side effects in a chain (logging, analytics)
-with(obj) { this → returns lambda } // multiple operations on existing non-null object
-
-// ✅ apply — object setup
-val intent = Intent(context, MainActivity::class.java).apply {
-    putExtra("user_id", userId)
-    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    @AssistedFactory
+    interface Factory {
+        fun create(itemId: String): DetailViewModel
+    }
 }
 
-// ✅ also — side effects
-repository.getQuestions()
-    .also { Timber.d("Loaded ${it.size} questions") }
-    .filter { it.isActive }
-
-// ✅ let — null-safe transform
-val greeting = user?.let { "Hello, ${it.name}" } ?: "Hello, guest"
-
-// ❌ Nested scope functions with unnamed 'it' — unreadable
-user?.let { it.address?.let { it.city?.let { println(it) } } }  // ❌ which 'it'?
+// In Composable
+@Composable
+fun DetailScreen(itemId: String) {
+    val viewModel: DetailViewModel = hiltViewModel<DetailViewModel, DetailViewModel.Factory>(
+        creationCallback = { factory -> factory.create(itemId) }
+    )
+}
 ```
 
----
-
-## MEDIUM — Collections
-
-### Rule 10: Kotlin Collection Functions over Loops
+## Rule 8: Qualifier for multiple bindings of same type
 
 ```kotlin
-// Transformation
-val names = users.map { it.name }
-val allTags = questions.flatMap { it.tags }
-val validIds = responses.mapNotNull { it.id }          // map + filterNotNull
-val bySubject = questions.groupBy { it.subject }       // Map<String, List<Question>>
-val byId = questions.associateBy { it.id }             // Map<String, Question>
+// ✅ @Qualifier to distinguish between two instances of same type
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class IoDispatcher
 
-// Filtering
-val (solved, unsolved) = questions.partition { it.isSolved }
-val math = questions.firstOrNull { it.subject == "Math" }  // ← never first{} (throws)
-val unique = questions.distinctBy { it.title }
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class MainDispatcher
 
-// Aggregation
-val total = questions.sumOf { it.expectedTimeSeconds }
-val hasErrors = questions.any { it.hasError }
-val allSolved = questions.all { it.isSolved }
+@Module
+@InstallIn(SingletonComponent::class)
+object DispatchersModule {
+    @Provides @IoDispatcher
+    fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
 
-// Safe access
-val third = questions.getOrNull(2)      // null if out of bounds
-val list = buildList {                  // idiomatic collection building
-    if (includeMath) addAll(mathQuestions)
-    if (includeScience) addAll(scienceQuestions)
+    @Provides @MainDispatcher
+    fun provideMainDispatcher(): CoroutineDispatcher = Dispatchers.Main
 }
 
-// ❌ first{} without null check — throws NoSuchElementException
-// ❌ Manual for loop for transformation — use map/filter/fold
+// Usage
+@HiltViewModel
+class MyViewModel @Inject constructor(
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+) : ViewModel()
 ```
 
----
-
-## MEDIUM — Other Patterns
-
-### Rule 11: lazy for Expensive Initialization
+## Rule 9: Testing with Hilt
 
 ```kotlin
-private val emailRegex by lazy { Regex("^[A-Za-z0-9+_.-]+@.+\\.[A-Za-z]{2,}$") }
-private val dateFormatter by lazy { DateTimeFormatter.ofPattern("MMM dd, yyyy") }
-// ❌ Eager init of heavy objects at class level — wastes memory if never used
+// ✅ @HiltAndroidTest for integration tests
+@HiltAndroidTest
+class HomeViewModelTest {
+    @get:Rule val hiltRule = HiltAndroidRule(this)
+
+    @Inject lateinit var getItems: GetItemsUseCase
+
+    @Before
+    fun setUp() { hiltRule.inject() }
+
+    @Test
+    fun `loads items successfully`() = runTest {
+        val viewModel = HomeViewModel(getItems)
+        viewModel.uiState.test {
+            assertEquals(HomeUiState.Loading, awaitItem())
+            assertTrue(awaitItem() is HomeUiState.Success)
+        }
+    }
+}
+
+// ✅ Replace production bindings in tests
+@TestInstallIn(components = [SingletonComponent::class], replaces = [RepositoryModule::class])
+@Module
+abstract class FakeRepositoryModule {
+    @Binds @Singleton
+    abstract fun bindItemRepository(impl: FakeItemRepository): ItemRepository
+}
 ```
 
-### Rule 12: Extension Functions — Utilities on Types You Don't Own
+## Rule 10: Common Dagger compile errors and fixes
 
-```kotlin
-fun Context.dpToPx(dp: Float): Int = (dp * resources.displayMetrics.density).toInt()
-fun String.isValidEmail() = android.util.Patterns.EMAIL_ADDRESS.matcher(this).matches()
-fun String?.orEmpty() = this ?: ""
-fun Int.secondsToDisplayTime() = if (this < 60) "${this}s" else "${this / 60}m ${this % 60}s"
-// ❌ Extension on Any — clutters all types
-// ❌ Business logic in extension function — can't inject dependencies
-// ❌ Extension on a class you own — just add the method directly
-```
+| Error | Cause | Fix |
+|---|---|---|
+| `[Dagger/MissingBinding]` | Missing @Provides / @Binds | Add module with binding |
+| `[Dagger/IncompatiblyScopedBindings]` | Singleton injected into narrower scope | Match scopes or remove scope annotation |
+| `abstract @Provides` | @Provides in abstract class | Use `object` for @Provides, `abstract class` for @Binds |
+| `@Binds methods must have only one parameter` | Wrong @Binds signature | `abstract fun bind(impl: Impl): Interface` |
+| `lateinit var not initialized` | Missing @AndroidEntryPoint | Add @AndroidEntryPoint to class |
+| `Cannot be provided without @Inject or @Provides` | Interface binding missing | Add @Binds module |
 
----
+## Deep-dive references
 
-## References
-
-- `references/flow-operators-reference.md` — Complete table of all Flow operators: transformation, filtering, combining, error handling, terminal, context operators. Read when choosing operators for complex Flow chains.
-- `rules/` — 14 individual rule files with full examples, anti-patterns, and decision tables for each rule above.
+- `references/hilt-testing.md` — full test setup with @TestInstallIn and fake modules
+- `references/hilt-workmanager.md` — @HiltWorker and WorkManager integration

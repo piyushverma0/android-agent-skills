@@ -1,325 +1,278 @@
 ---
 name: hilt-di
 description: |
-  Hilt dependency injection for Android. Use this skill whenever working with
-  Hilt in any Android project — @HiltViewModel, hiltViewModel(), @AndroidEntryPoint,
-  @HiltAndroidApp, @Module, @InstallIn, @Provides, @Binds, @Singleton, @ViewModelScoped,
-  @ActivityScoped, @Qualifier, @EntryPoint, EntryPointAccessors, @AssistedInject,
-  @HiltWorker, HiltWorkerFactory, @HiltAndroidTest, @UninstallModules, @BindValue,
-  SavedStateHandle, CoroutineExceptionHandler, or any Dagger/Hilt compile error.
+  Hilt dependency injection for Android AI agents. Use this skill whenever setting up Hilt,
+  writing @HiltViewModel, @AndroidEntryPoint, @HiltAndroidApp, @Module, @InstallIn, @Provides,
+  @Binds, @Singleton, @ViewModelScoped, @ActivityScoped, @EntryPoint, @AssistedInject,
+  @HiltWorker, @HiltAndroidTest, @BindValue, or debugging any Dagger/Hilt compile error.
+  Also applies when choosing between @Provides vs @Binds, scoping dependencies, injecting
+  into non-Hilt classes, or setting up Hilt for testing. Always use this skill before
+  writing any @Module, @HiltViewModel, or @AndroidEntryPoint.
 ---
 
 # Hilt Dependency Injection
 
-Production-complete Hilt DI patterns. 12 rules across 7 categories, ordered by impact.
+10 rules that fix what AI agents consistently get wrong with Hilt.
 
-## Setup
+## Setup — required before any injection works
 
 ```kotlin
-// build.gradle.kts (project root)
-plugins {
-    id("com.google.devtools.ksp") version "1.9.22-1.0.17" apply false
-    id("com.google.dagger.hilt.android") version "2.51.1" apply false
-}
+// MyApplication.kt — REQUIRED, must be declared in AndroidManifest
+@HiltAndroidApp
+class MyApplication : Application()
 
-// build.gradle.kts (app)
+// AndroidManifest.xml
+<application android:name=".MyApplication" ...>
+```
+
+```kotlin
+// build.gradle.kts — use KSP, never kapt
 plugins {
-    id("com.google.devtools.ksp")
-    id("com.google.dagger.hilt.android")
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
 dependencies {
-    implementation("com.google.dagger:hilt-android:2.51.1")
-    ksp("com.google.dagger:hilt-android-compiler:2.51.1")       // ← KSP, not kapt
-    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
-    implementation("androidx.hilt:hilt-work:1.2.0")
-    ksp("androidx.hilt:hilt-compiler:1.2.0")
-    androidTestImplementation("com.google.dagger:hilt-android-testing:2.51.1")
-    kspAndroidTest("com.google.dagger:hilt-android-compiler:2.51.1")
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)                          // ← ksp, not kapt
+    implementation(libs.androidx.hilt.navigation.compose)
 }
 ```
 
-```kotlin
-@HiltAndroidApp   // ← mandatory on Application class — triggers code generation
-class MyApplication : Application()
-// AndroidManifest.xml: android:name=".MyApplication"
-
-@AndroidEntryPoint   // ← mandatory on every Activity/Fragment using injection
-class MainActivity : ComponentActivity()
-```
-
----
-
-## CRITICAL — Scopes
-
-### Rule 1: Match Scope to Lifetime
+## Rule 1: @Binds over @Provides for interface binding
 
 ```kotlin
-// @Singleton     → SingletonComponent    → app lifetime (repositories, network, DB)
-// @ViewModelScoped → ViewModelComponent  → one ViewModel's lifetime (use cases)
-// @ActivityScoped → ActivityComponent   → activity lifetime
-// (unscoped)                            → new instance per injection (mappers, utils)
-
-@Module @InstallIn(SingletonComponent::class)
-object AppModule {
-    @Provides @Singleton
-    fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
-        Room.databaseBuilder(context, AppDatabase::class.java, "app.db").build()
-}
-
-@Module @InstallIn(ViewModelComponent::class)
-abstract class UseCaseModule {
-    @Binds @ViewModelScoped
-    abstract fun bindSolveUseCase(impl: SolveUseCaseImpl): SolveUseCase
-}
-// ❌ @Singleton for everything — prevents test isolation, wastes memory
-// ❌ Unscoped Repository — new instance per injection, loses cached state
-```
-
----
-
-## CRITICAL — Modules
-
-### Rule 2: @Provides for third-party, @Binds for your interfaces
-
-```kotlin
-// ✅ @Provides — classes you don't own (OkHttp, Retrofit, Supabase, Room)
-@Module @InstallIn(SingletonComponent::class)
-object NetworkModule {
-    @Provides @Singleton
-    fun provideSupabaseClient(): SupabaseClient = createSupabaseClient(
-        supabaseUrl = BuildConfig.SUPABASE_URL,
-        supabaseKey = BuildConfig.SUPABASE_ANON_KEY
-    ) { install(Auth); install(Functions); install(Postgrest) }
-}
-
-// ✅ @Binds — your interface + implementation with @Inject constructor
-// More efficient than @Provides — no wrapper function generated
-@Module @InstallIn(SingletonComponent::class)
+// ✅ @Binds — zero runtime overhead, compiler-verified
+@Module
+@InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
-    @Binds @Singleton
-    abstract fun bindScanRepository(impl: ScanRepositoryImpl): ScanRepository
+    @Binds
+    @Singleton
+    abstract fun bindItemRepository(impl: ItemRepositoryImpl): ItemRepository
 
-    @Binds @Singleton
+    @Binds
+    @Singleton
     abstract fun bindUserRepository(impl: UserRepositoryImpl): UserRepository
-
-    companion object {
-        // Mix @Provides in companion object when needed alongside @Binds
-        @Provides @Singleton
-        fun provideApiConfig(): ApiConfig = ApiConfig.default()
-    }
 }
 
-// ScanRepositoryImpl must have @Inject constructor for @Binds to work
-class ScanRepositoryImpl @Inject constructor(
-    private val supabase: SupabaseClient,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
-) : ScanRepository
-
-// ❌ @Binds in object module — compile error (@Binds must be abstract)
-// ❌ @Provides in abstract class without companion object — compile error
+// ❌ @Provides for interface — works but is less efficient
+@Module
+@InstallIn(SingletonComponent::class)
+object RepositoryModule {
+    @Provides
+    @Singleton
+    fun provideItemRepository(impl: ItemRepositoryImpl): ItemRepository = impl
+}
 ```
 
----
-
-## CRITICAL — ViewModels
-
-### Rule 3: @HiltViewModel + hiltViewModel()
+## Rule 2: @Provides for third-party / constructed objects
 
 ```kotlin
-// ✅ Standard ViewModel — @HiltViewModel + @Inject constructor
+// ✅ @Provides when you control construction
+@Module
+@InstallIn(SingletonComponent::class)
+object NetworkModule {
+    @Provides
+    @Singleton
+    fun provideOkHttpClient(): OkHttpClient =
+        OkHttpClient.Builder()
+            .addInterceptor(HttpLoggingInterceptor().apply { level = Level.BODY })
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit =
+        Retrofit.Builder()
+            .baseUrl(BuildConfig.BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(Json.asConverterFactory("application/json".toMediaType()))
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideItemApiService(retrofit: Retrofit): ItemApiService =
+        retrofit.create(ItemApiService::class.java)
+}
+```
+
+## Rule 3: Scope correctly
+
+```kotlin
+// @Singleton — one instance for app lifetime
+@Binds @Singleton abstract fun bindRepo(impl: RepoImpl): Repo
+
+// @ActivityRetainedScoped — survives rotation, dies with activity backstack
+// (default for @HiltViewModel — don't re-declare it)
+
+// @ViewModelScoped — tied to ViewModel lifetime
+@Binds @ViewModelScoped abstract fun bindSomeHelper(impl: SomeHelperImpl): SomeHelper
+
+// @ActivityScoped — tied to Activity lifetime (rare)
+@Binds @ActivityScoped abstract fun bindNavigator(impl: NavigatorImpl): Navigator
+
+// ❌ Injecting @Singleton into @ViewModelScoped — scope violation, Dagger error
+```
+
+## Rule 4: @HiltViewModel — correct pattern
+
+```kotlin
+// ✅ ViewModel injection
 @HiltViewModel
-class ScanViewModel @Inject constructor(
-    private val scanRepository: ScanRepository,
-    private val savedStateHandle: SavedStateHandle   // ← Hilt provides automatically
-) : ViewModel() {
-    // Read nav args type-safely
-    private val questionId: String = checkNotNull(savedStateHandle["questionId"])
-}
+class HomeViewModel @Inject constructor(
+    private val getItems: GetItemsUseCase,
+    private val savedStateHandle: SavedStateHandle  // free with Hilt
+) : ViewModel() { ... }
 
-// ✅ In Composable — always hiltViewModel()
+// ✅ In Composable — always hiltViewModel(), never viewModel()
 @Composable
-fun ScanScreen(viewModel: ScanViewModel = hiltViewModel()) { ... }
+fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { ... }
 
-// ✅ Shared ViewModel scoped to nav graph
+// ✅ Scoped to NavGraph entry
 @Composable
-fun CheckoutScreen(navController: NavController) {
-    val entry = remember(navController) { navController.getBackStackEntry("checkout_graph") }
-    val sharedVm: CheckoutViewModel = hiltViewModel(entry)
+fun CheckoutFlow(navController: NavController) {
+    val parentEntry = remember(navController) {
+        navController.getBackStackEntry(CheckoutRoute)
+    }
+    val viewModel: CheckoutViewModel = hiltViewModel(parentEntry)
 }
-
-// ❌ ViewModelProvider() — bypasses Hilt injection
-// ❌ Manual ViewModelProvider.Factory — unnecessary with Hilt
-// ❌ Injecting Activity into ViewModel — memory leak
 ```
 
-### Rule 4: Assisted Injection for Runtime Parameters
+## Rule 5: @AndroidEntryPoint on all Android classes that inject
 
 ```kotlin
-// ✅ When ViewModel needs both injected deps AND runtime args
-@HiltViewModel(assistedFactory = DetailViewModel.Factory::class)
-class DetailViewModel @AssistedInject constructor(
-    @Assisted val itemId: String,              // ← runtime — from navigation
-    private val repository: ItemRepository    // ← injected by Hilt
-) : ViewModel() {
-    @AssistedFactory
-    interface Factory { fun create(itemId: String): DetailViewModel }
+// ✅ Required on: Activity, Fragment, View, Service, BroadcastReceiver
+@AndroidEntryPoint
+class MainActivity : ComponentActivity() {
+    @Inject lateinit var analyticsTracker: AnalyticsTracker
 }
 
-// ✅ In Composable
-val viewModel = hiltViewModel<DetailViewModel, DetailViewModel.Factory> { factory ->
-    factory.create(itemId = itemId)
+@AndroidEntryPoint
+class NotificationService : Service() {
+    @Inject lateinit var notificationHandler: NotificationHandler
 }
-// Prefer SavedStateHandle for simple nav args — simpler, survives process death
+
+// ❌ Forgetting @AndroidEntryPoint — results in lateinit not initialized crash
+class MainActivity : ComponentActivity() {
+    @Inject lateinit var analyticsTracker: AnalyticsTracker  // CRASH: not injected
+}
 ```
 
----
-
-## HIGH — Qualifiers
-
-### Rule 5: Qualifiers for Multiple Bindings of Same Type
+## Rule 6: @EntryPoint for non-Hilt classes
 
 ```kotlin
-// ✅ Define qualifiers with @Retention(BINARY)
-@Qualifier @Retention(AnnotationRetention.BINARY) annotation class IoDispatcher
-@Qualifier @Retention(AnnotationRetention.BINARY) annotation class DefaultDispatcher
-@Qualifier @Retention(AnnotationRetention.BINARY) annotation class AuthenticatedClient
-@Qualifier @Retention(AnnotationRetention.BINARY) annotation class AnonymousClient
-
-// ✅ Provide with qualifiers
-@Module @InstallIn(SingletonComponent::class)
-object DispatcherModule {
-    @Provides @IoDispatcher
-    fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
-
-    @Provides @DefaultDispatcher
-    fun provideDefaultDispatcher(): CoroutineDispatcher = Dispatchers.Default
-}
-
-// ✅ Inject with qualifier
-class ScanRepositoryImpl @Inject constructor(
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
-)
-// ❌ No qualifier for same type — compile error "bound multiple times"
-// ❌ @Retention(RUNTIME) — use BINARY
-```
-
----
-
-## HIGH — Entry Points
-
-### Rule 6: @EntryPoint for Non-Hilt Classes
-
-```kotlin
-// ✅ ContentProvider, BroadcastReceiver, custom View — can't use @AndroidEntryPoint
+// ✅ Access Hilt graph from classes Hilt doesn't manage
 @EntryPoint
 @InstallIn(SingletonComponent::class)
-interface AppEntryPoint {
-    fun scanRepository(): ScanRepository
+interface AnalyticsEntryPoint {
     fun analyticsTracker(): AnalyticsTracker
 }
 
-// Access from any context
-val repo = EntryPointAccessors
-    .fromApplication(context.applicationContext, AppEntryPoint::class.java)
-    .scanRepository()
-
-// Activity-scoped entry point
-@EntryPoint @InstallIn(ActivityComponent::class)
-interface ActivityEntryPoint { fun navManager(): NavigationManager }
-val nav = EntryPointAccessors.fromActivity(activity, ActivityEntryPoint::class.java).navManager()
-
-// ❌ @AndroidEntryPoint on ContentProvider/BroadcastReceiver — not supported
-// ❌ fromApplication() with activity context for SingletonComponent — must be applicationContext
+// Usage in a ContentProvider or non-Hilt class
+val entryPoint = EntryPointAccessors.fromApplication(
+    context.applicationContext,
+    AnalyticsEntryPoint::class.java
+)
+val tracker = entryPoint.analyticsTracker()
 ```
 
----
-
-## MEDIUM — WorkManager
-
-### Rule 7: @HiltWorker + HiltWorkerFactory
+## Rule 7: @AssistedInject for runtime parameters
 
 ```kotlin
-// ✅ Worker
-@HiltWorker
-class SyncWorker @AssistedInject constructor(
-    @Assisted context: Context,
-    @Assisted workerParams: WorkerParameters,
-    private val syncRepository: SyncRepository
-) : CoroutineWorker(context, workerParams) {
-    override suspend fun doWork(): Result = try {
-        syncRepository.syncAll(); Result.success()
-    } catch (e: Exception) {
-        if (runAttemptCount < 3) Result.retry() else Result.failure()
+// ✅ When ViewModel needs a runtime value (e.g., item ID from nav args)
+@HiltViewModel(assistedFactory = DetailViewModel.Factory::class)
+class DetailViewModel @AssistedInject constructor(
+    @Assisted val itemId: String,
+    private val getItem: GetItemUseCase
+) : ViewModel() {
+
+    @AssistedFactory
+    interface Factory {
+        fun create(itemId: String): DetailViewModel
     }
 }
 
-// ✅ Application — register HiltWorkerFactory
-@HiltAndroidApp
-class MyApplication : Application(), Configuration.Provider {
-    @Inject lateinit var workerFactory: HiltWorkerFactory
-    override val workManagerConfiguration
-        get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
+// In Composable
+@Composable
+fun DetailScreen(itemId: String) {
+    val viewModel: DetailViewModel = hiltViewModel<DetailViewModel, DetailViewModel.Factory>(
+        creationCallback = { factory -> factory.create(itemId) }
+    )
 }
-// Also remove default WorkManager initializer in AndroidManifest.xml (tools:node="remove")
-// ❌ @AndroidEntryPoint on Worker — not supported
-// ❌ Missing HiltWorkerFactory in Application — workers get no injection
 ```
 
----
-
-## CRITICAL — Testing
-
-### Rule 8: @HiltAndroidTest + @BindValue for Test Doubles
+## Rule 8: Qualifier for multiple bindings of same type
 
 ```kotlin
-// ✅ Replace real module with fake
-@UninstallModules(RepositoryModule::class)
+// ✅ @Qualifier to distinguish between two instances of same type
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class IoDispatcher
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class MainDispatcher
+
+@Module
+@InstallIn(SingletonComponent::class)
+object DispatchersModule {
+    @Provides @IoDispatcher
+    fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
+
+    @Provides @MainDispatcher
+    fun provideMainDispatcher(): CoroutineDispatcher = Dispatchers.Main
+}
+
+// Usage
+@HiltViewModel
+class MyViewModel @Inject constructor(
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+) : ViewModel()
+```
+
+## Rule 9: Testing with Hilt
+
+```kotlin
+// ✅ @HiltAndroidTest for integration tests
 @HiltAndroidTest
-class ScanViewModelTest {
+class HomeViewModelTest {
+    @get:Rule val hiltRule = HiltAndroidRule(this)
 
-    @get:Rule(order = 0) val hiltRule = HiltAndroidRule(this)   // ← order 0 always
-    @get:Rule(order = 1) val composeRule = createAndroidComposeRule<MainActivity>()
+    @Inject lateinit var getItems: GetItemsUseCase
 
-    @BindValue @JvmField
-    val fakeScanRepo: ScanRepository = FakeScanRepository()   // ← replaces real binding
-
-    @BindValue @IoDispatcher @JvmField
-    val testDispatcher: CoroutineDispatcher = UnconfinedTestDispatcher()
-
-    @Before fun setUp() { hiltRule.inject() }   // ← must call before @Inject fields
+    @Before
+    fun setUp() { hiltRule.inject() }
 
     @Test
-    fun `shows loading while solving`() {
-        composeRule.onNodeWithTag("scan_button").performClick()
-        composeRule.onNodeWithTag("loading_indicator").assertIsDisplayed()
+    fun `loads items successfully`() = runTest {
+        val viewModel = HomeViewModel(getItems)
+        viewModel.uiState.test {
+            assertEquals(HomeUiState.Loading, awaitItem())
+            assertTrue(awaitItem() is HomeUiState.Success)
+        }
     }
 }
 
-// ✅ Unit tests — no Hilt, inject directly
-class ScanViewModelUnitTest {
-    private val viewModel = ScanViewModel(scanRepository = FakeScanRepository())
-    @Test fun `state is loading when solve starts`() = runTest { ... }
+// ✅ Replace production bindings in tests
+@TestInstallIn(components = [SingletonComponent::class], replaces = [RepositoryModule::class])
+@Module
+abstract class FakeRepositoryModule {
+    @Binds @Singleton
+    abstract fun bindItemRepository(impl: FakeItemRepository): ItemRepository
 }
-// ❌ Missing hiltRule.inject() → @Inject fields null → NullPointerException
-// ❌ hiltRule order != 0 → injection before rule setup → crash
 ```
 
----
-
-## Common Errors Quick Reference
+## Rule 10: Common Dagger compile errors and fixes
 
 | Error | Cause | Fix |
 |---|---|---|
-| `cannot be provided without @Inject or @Provides` | Missing binding | Add `@Inject` constructor or module binding |
-| `@Binds methods must be abstract` | `@Binds` in `object` module | Change to `abstract class` |
-| `lateinit not initialized` | Missing `hiltRule.inject()` or `@AndroidEntryPoint` | Add both |
-| `HiltComponents.SingletonC not found` | Missing `@HiltAndroidApp` | Add to Application class |
-| `may only be used in @XComponent` | Scope/component mismatch | Match scope to `@InstallIn` |
-| `bound multiple times` | Two providers for same type | Add `@Qualifier` annotations |
+| `[Dagger/MissingBinding]` | Missing @Provides / @Binds | Add module with binding |
+| `[Dagger/IncompatiblyScopedBindings]` | Singleton injected into narrower scope | Match scopes or remove scope annotation |
+| `abstract @Provides` | @Provides in abstract class | Use `object` for @Provides, `abstract class` for @Binds |
+| `@Binds methods must have only one parameter` | Wrong @Binds signature | `abstract fun bind(impl: Impl): Interface` |
+| `lateinit var not initialized` | Missing @AndroidEntryPoint | Add @AndroidEntryPoint to class |
+| `Cannot be provided without @Inject or @Provides` | Interface binding missing | Add @Binds module |
 
----
+## Deep-dive references
 
-## References
-
-- `references/component-hierarchy.md` — Full component tree, scope-to-component mapping, standard module organization, @Provides vs @Binds decision guide. Read when setting up a new module or choosing a scope.
-- `rules/` — 12 individual rule files with complete examples, anti-patterns, and error explanations for each rule above.
+- `references/hilt-testing.md` — full test setup with @TestInstallIn and fake modules
+- `references/hilt-workmanager.md` — @HiltWorker and WorkManager integration

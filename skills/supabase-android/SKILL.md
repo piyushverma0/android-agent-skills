@@ -1,339 +1,235 @@
 ---
 name: supabase-android
 description: |
-  Supabase Kotlin SDK (supabase-kt) for Android. Use this skill whenever working
-  with Supabase in Android/Kotlin — authentication, edge functions, database queries,
-  realtime subscriptions, storage, RPC calls, JWT auth, UnauthorizedRestException,
-  FunctionsHttpException, persistSession, getUser(jwt), sessionStatus Flow,
-  FunctionsHttpException, config.toml verify_jwt, @Serializable, SerialName,
-  decodeList, body<T>, or any supabase-kt API.
+  Supabase Kotlin SDK for Android AI agents. Use this skill whenever integrating Supabase
+  in Android apps: supabase-kt setup, Auth (email/password, Google, phone OTP),
+  UnauthorizedRestException fix, persistSession configuration, getUser(jwt) pattern,
+  FunctionsHttpException, Edge Functions invocation, Realtime subscriptions, Postgres queries,
+  Row Level Security, Supabase Storage file upload, sessionStatus Flow, verify_jwt in config.toml,
+  @Serializable DTOs, decodeList, or any supabase-kt usage in Kotlin/Android.
 ---
 
-# Supabase Android
-
-Production-complete Supabase Kotlin SDK patterns. 12 rules across 6 categories.
+# Supabase Android (supabase-kt)
 
 ## Setup
 
-```kotlin
-// build.gradle.kts (app)
-val supabaseVersion = "3.0.1"
-implementation(platform("io.github.jan-tennert.supabase:bom:$supabaseVersion"))
-implementation("io.github.jan-tennert.supabase:postgrest-kt")
-implementation("io.github.jan-tennert.supabase:auth-kt")
-implementation("io.github.jan-tennert.supabase:functions-kt")
-implementation("io.github.jan-tennert.supabase:realtime-kt")
-implementation("io.github.jan-tennert.supabase:storage-kt")
-implementation("io.ktor:ktor-client-android:2.3.7")
-implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-plugins { kotlin("plugin.serialization") version "1.9.22" }
+```toml
+[versions]
+supabase = "3.0.2"
+ktor = "3.0.1"
+[libraries]
+supabase-bom = { group = "io.github.jan-tennert.supabase", name = "bom", version.ref = "supabase" }
+supabase-postgrest = { group = "io.github.jan-tennert.supabase", name = "postgrest-kt" }
+supabase-auth = { group = "io.github.jan-tennert.supabase", name = "auth-kt" }
+supabase-realtime = { group = "io.github.jan-tennert.supabase", name = "realtime-kt" }
+supabase-storage = { group = "io.github.jan-tennert.supabase", name = "storage-kt" }
+supabase-functions = { group = "io.github.jan-tennert.supabase", name = "functions-kt" }
+ktor-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
 ```
 
 ```kotlin
-// di/SupabaseModule.kt — @Singleton, one instance per app
+implementation(platform(libs.supabase.bom))
+implementation(libs.supabase.postgrest)
+implementation(libs.supabase.auth)
+implementation(libs.supabase.realtime)
+implementation(libs.supabase.functions)
+implementation(libs.ktor.android)
+```
+
+## Rule 1: Client initialization — the #1 mistake
+
+```kotlin
+// ✅ Correct Supabase client setup
 @Module @InstallIn(SingletonComponent::class)
 object SupabaseModule {
     @Provides @Singleton
     fun provideSupabaseClient(): SupabaseClient = createSupabaseClient(
         supabaseUrl = BuildConfig.SUPABASE_URL,
-        supabaseKey = BuildConfig.SUPABASE_ANON_KEY   // ← ANON key only, never service role
+        supabaseKey = BuildConfig.SUPABASE_ANON_KEY
     ) {
-        install(Auth); install(Functions); install(Postgrest)
-        install(Realtime); install(Storage)
+        install(Auth) {
+            scheme = "myapp"
+            host = "callback"
+        }
+        install(Postgrest)
+        install(Realtime)
+        install(Storage)
+        install(Functions)
     }
 }
 ```
 
----
-
-## CRITICAL — JWT Auth Pattern for Edge Functions
-
-### Rule 1: persistSession:false + getUser(jwt) — exact pattern, never deviate
-
-The most common Android + Supabase bug. `UnauthorizedRestException` is caused
-by missing `persistSession: false` in the edge function's Supabase client.
-
-```typescript
-// ✅ Edge function — EXACT pattern required
-const authHeader = req.headers.get('Authorization') ?? ''
-const jwt = authHeader.replace(/^Bearer\s+/i, '').trim()
-
-if (!jwt) {
-  return new Response(JSON.stringify({ error: 'Missing Authorization header' }),
-    { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-}
-
-// TWO things required — both are mandatory:
-const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-  global: { headers: { Authorization: `Bearer ${jwt}` } },
-  auth:   { persistSession: false },   // ← CRITICAL: without this, getUser() returns null
-})
-const { data: userData, error } = await userClient.auth.getUser(jwt)  // ← pass jwt directly
-if (error || !userData?.user?.id) {
-  return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, ... })
-}
-const userId = userData.user.id
-```
-
-```toml
-# supabase/functions/your-function/config.toml
-[functions.your-function]
-verify_jwt = false   # Auth handled manually inside
-```
-
-**Why `persistSession: false` is non-negotiable:** Edge functions are stateless —
-fresh Deno process per invocation. Without it, the client reads a cached session
-that doesn't exist → `getUser()` returns `null` → `user_id: null` in logs.
-
-**Why `getUser(jwt)` not `getUser()`:** No-args version reads from empty session cache.
-Passing `jwt` validates directly against Supabase Auth.
-
-### Rule 2: Edge function execution order
-
-```typescript
-// ✅ Always in this order — never consume quota before validating input
-// 1. CORS preflight check
-// 2. Auth verification (JWT)
-// 3. Input validation    ← BEFORE quota — bad input must NOT burn quota
-// 4. Quota consumption
-// 5. Business logic
-// 6. Success response
-// (wrap everything in try/catch — missing it means no error response on crash)
-```
-
----
-
-## CRITICAL — Android Side Invocation
-
-### Rule 3: functions.invoke() — JWT attached automatically
+## Rule 2: Auth — the UnauthorizedRestException fix
 
 ```kotlin
-// ✅ supabase-kt attaches JWT automatically — no manual header needed
-suspend fun scanSolveQuestion(imageBase64: String, mode: String): ScanSolveResponse =
-    withContext(Dispatchers.IO) {
-        supabase.functions.invoke(
-            function = "scan-solve-question",
-            body = buildJsonObject {
-                put("image_base64", imageBase64)
-                put("mode", mode)
-                put("super_ai", false)
-            }
-        ).body<ScanSolveResponse>()
+// THE most common Supabase Android bug — fixed here permanently
+
+// ❌ Wrong — causes UnauthorizedRestException on Edge Functions
+val client = createSupabaseClient(url, anonKey) {
+    install(Auth)  // persistSession defaults to true — getUser() returns null
+}
+val user = client.auth.currentUserOrNull()  // null after hot restart
+
+// ✅ Correct — when calling Edge Functions with user JWT
+suspend fun callSecureEdgeFunction(jwt: String): MyResponse {
+    val userClient = createSupabaseClient(supabaseUrl, supabaseAnonKey) {
+        install(Auth) {
+            persistSession = false       // ← REQUIRED for JWT passthrough
+        }
+        install(Functions)
+    }
+    userClient.auth.getUser(jwt)         // ← pass jwt directly, always
+    return userClient.functions.invoke("my-function")
+}
+
+// ✅ Standard auth — sign in and observe session
+class AuthRepositoryImpl @Inject constructor(
+    private val supabase: SupabaseClient
+) : AuthRepository {
+    override val sessionStatus: Flow<SessionStatus>
+        get() = supabase.auth.sessionStatus
+
+    override suspend fun signIn(email: String, password: String): Result<Unit> = runCatching {
+        supabase.auth.signInWith(Email) {
+            this.email = email
+            this.password = password
+        }
     }
 
-// ✅ Response data class — must be @Serializable, use @SerialName for snake_case
+    override suspend fun signUp(email: String, password: String): Result<Unit> = runCatching {
+        supabase.auth.signUpWith(Email) {
+            this.email = email
+            this.password = password
+        }
+    }
+
+    override suspend fun signOut() { supabase.auth.signOut() }
+
+    override fun currentUser(): UserInfo? = supabase.auth.currentUserOrNull()
+}
+```
+
+## Rule 3: Postgrest — database queries
+
+```kotlin
+// ✅ DTOs must be @Serializable
 @Serializable
-data class ScanSolveResponse(
-    @SerialName("final_answer")          val finalAnswer: String,
-    @SerialName("step_by_step")          val stepByStep: List<String>,
-    val concept: String,
-    val topic: String,
-    val subject: String,
-    @SerialName("extracted_question")    val extractedQuestion: String? = null,
-    @SerialName("remaining_scans")       val remainingScans: Int = 0
-)
-```
-
----
-
-## CRITICAL — Error Handling
-
-### Rule 4: Handle each exception type differently
-
-```kotlin
-// ✅ Each exception has a specific cause and fix
-try {
-    supabase.functions.invoke("my-function", body = payload).body<MyResponse>()
-} catch (e: FunctionsHttpException) {
-    // ← HTTP error from your function (4xx, 5xx)
-    when (e.response.status.value) {
-        401  -> throw AuthException("Session expired")
-        429  -> throw QuotaException("Quota exhausted")
-        400  -> throw ValidationException("Invalid input")
-        else -> throw ServerException("Server error")
-    }
-} catch (e: UnauthorizedRestException) {
-    // ← JWT rejected by SDK before reaching function
-    throw AuthException("Session expired — please log in again")
-} catch (e: IOException) {
-    throw NetworkException("No internet connection")
-}
-```
-
-**Error quick-reference:**
-
-| Exception | Cause | Fix |
-|---|---|---|
-| `UnauthorizedRestException` | JWT invalid OR `persistSession` missing | Add `persistSession: false` + `getUser(jwt)` |
-| `FunctionsHttpException 401` | `verify_jwt = true` in config.toml | Add `verify_jwt = false` to config.toml |
-| `FunctionsHttpException 429` | Quota exhausted | Show upgrade UI |
-| `NoTransformationFoundException` | JSON doesn't match data class | Check `@SerialName` mappings |
-| `user_id: null` in logs | `getUser()` called without jwt arg | Change to `getUser(jwt)` |
-
----
-
-## CRITICAL — Security
-
-### Rule 5: Anon key in Android, service role only in edge functions
-
-```kotlin
-// ❌ NEVER in Android app — exposes admin access to anyone who decompiles the APK
-supabaseKey = BuildConfig.SUPABASE_SERVICE_ROLE_KEY
-
-// ✅ Android always uses anon key
-supabaseKey = BuildConfig.SUPABASE_ANON_KEY
-```
-
-```sql
--- ✅ RLS on every user-data table
-ALTER TABLE scan_history ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "own rows" ON scan_history FOR ALL USING (auth.uid() = user_id);
-```
-
-```
-□ Anon key in Android, service role only in edge function env vars
-□ RLS enabled on all user-data tables
-□ local.properties in .gitignore — keys never committed
-□ No JWT or PII in logs
-□ Storage paths scoped to userId: "users/{userId}/filename"
-```
-
----
-
-## HIGH — Authentication
-
-### Rule 6: Observe sessionStatus Flow — never poll
-
-```kotlin
-// ✅ Single StateFlow for auth state — reacts automatically to login/logout
-val isAuthenticated: StateFlow<Boolean> = supabase.auth.sessionStatus
-    .map { it is SessionStatus.Authenticated }
-    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
-
-// ✅ Handle ALL session states — missing LoadingFromStorage causes blank screen flash
-when (sessionStatus) {
-    is SessionStatus.Authenticated    -> MainApp()
-    is SessionStatus.NotAuthenticated -> LoginScreen()
-    is SessionStatus.LoadingFromStorage -> SplashScreen()   // ← cold start
-    is SessionStatus.RefreshFailure     -> { LoginScreen(); showSessionExpired() }
-}
-
-// ✅ Sign in
-supabase.auth.signInWith(Email) { email = it; password = pass }
-supabase.auth.signInWith(Google)
-supabase.auth.signOut()
-```
-
-See `references/auth-flows.md` for OAuth setup, deep links, and common auth errors.
-
----
-
-## HIGH — Database
-
-### Rule 7: @Serializable + @SerialName + withContext(IO)
-
-```kotlin
-// ✅ Every data class used with Supabase must be @Serializable
-@Serializable
-data class Question(
+data class ItemDto(
     val id: String,
-    @SerialName("user_id")    val userId: String,     // ← snake_case DB column
-    @SerialName("created_at") val createdAt: String,
-    val subject: String? = null                        // ← nullable for optional
+    val title: String,
+    val description: String,
+    @SerialName("user_id") val userId: String,
+    @SerialName("is_favorite") val isFavorite: Boolean = false,
+    @SerialName("created_at") val createdAt: String
 )
 
-// ✅ Queries — always in Repository, always withContext(IO)
-val questions = supabase.from("questions")
-    .select { filter { eq("user_id", userId); order("created_at", Order.DESCENDING) } }
-    .decodeList<Question>()
+// ✅ CRUD operations
+class ItemRemoteDataSource @Inject constructor(
+    private val supabase: SupabaseClient
+) {
+    // SELECT
+    suspend fun getItems(userId: String): List<ItemDto> =
+        supabase.from("items")
+            .select {
+                filter { eq("user_id", userId) }
+                order("created_at", Order.DESCENDING)
+                limit(50)
+            }
+            .decodeList()   // ← always decodeList() for arrays
 
-supabase.from("scan_history").insert(ScanHistoryInsert(userId, question, answer))
-supabase.from("user_prefs").upsert(prefs, onConflict = "user_id")
+    // SELECT single
+    suspend fun getItem(id: String): ItemDto =
+        supabase.from("items")
+            .select { filter { eq("id", id) } }
+            .decodeSingle()
 
-val quota = supabase.postgrest.rpc("check_scan_quota",
-    buildJsonObject { put("p_user_id", userId); put("p_free_limit", 5) }
-).decodeAs<QuotaResult>()
-```
+    // INSERT
+    suspend fun createItem(item: ItemDto): ItemDto =
+        supabase.from("items")
+            .insert(item) { select() }
+            .decodeSingle()
 
----
+    // UPDATE
+    suspend fun updateItem(id: String, updates: Map<String, Any>): ItemDto =
+        supabase.from("items")
+            .update(updates) {
+                filter { eq("id", id) }
+                select()
+            }
+            .decodeSingle()
 
-## HIGH — Realtime
+    // UPSERT
+    suspend fun upsertItem(item: ItemDto) {
+        supabase.from("items").upsert(item)
+    }
 
-### Rule 8: Connect, subscribe, clean up in onCleared()
-
-```kotlin
-// ✅ Realtime in ViewModel — always clean up
-private var channel: RealtimeChannel? = null
-
-init {
-    viewModelScope.launch {
-        supabase.realtime.connect()
-        channel = supabase.channel("scan-results-$userId")
-        channel!!.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
-            table = "scan_results"; filter = "user_id=eq.$userId"   // ← filter required
-        }.onEach { _uiState.update { s -> s.copy(latest = it.record.decodeRecord()) } }
-         .launchIn(viewModelScope)
-        channel!!.subscribe()
+    // DELETE
+    suspend fun deleteItem(id: String) {
+        supabase.from("items").delete { filter { eq("id", id) } }
     }
 }
+```
 
-override fun onCleared() {
-    viewModelScope.launch { channel?.unsubscribe(); supabase.realtime.disconnect() }
+## Rule 4: Edge Functions — correct invocation
+
+```kotlin
+// config.toml on server side
+// [functions.my-function]
+// verify_jwt = false    ← set when you handle JWT manually
+
+// ✅ Invoke with typed request/response
+@Serializable data class MyRequest(val itemId: String, val action: String)
+@Serializable data class MyResponse(val success: Boolean, val message: String)
+
+suspend fun invokeFunction(request: MyRequest): Result<MyResponse> = runCatching {
+    supabase.functions.invoke(
+        function = "my-function",
+        body = request
+    )
 }
 ```
 
----
-
-## HIGH — Storage
-
-### Rule 9: User-scoped paths, read bytes before upload
+## Rule 5: Realtime subscriptions
 
 ```kotlin
-// ✅ Always scope path to userId
-val path = "users/$userId/${UUID.randomUUID()}.jpg"   // ← prevents cross-user access
-
-val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return
-supabase.storage.from("question-images").upload(path = path, data = bytes)
-
-val publicUrl = supabase.storage.from("question-images").publicUrl(path)
-// ✅ Store path in DB, generate URL on demand — never store full URL
-```
-
----
-
-## HIGH — Repository Pattern
-
-### Rule 10: All Supabase calls in Repository, never in ViewModel
-
-```kotlin
-// ✅ Interface — no SDK imports in domain layer
-interface ScanRepository {
-    suspend fun scanSolveQuestion(...): ScanSolveResponse
-    fun observeScanHistory(userId: String): Flow<List<ScanHistory>>
-}
-
-// ✅ Impl — wraps SDK, runs on IO dispatcher
-class ScanRepositoryImpl @Inject constructor(
-    private val supabase: SupabaseClient,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
-) : ScanRepository {
-    override suspend fun scanSolveQuestion(...) = withContext(ioDispatcher) {
-        supabase.functions.invoke("scan-solve-question", body = buildJsonObject { ... })
-            .body<ScanSolveResponse>()
+// ✅ Subscribe to table changes
+fun getItemsRealtime(userId: String): Flow<List<ItemDto>> = flow {
+    val channel = supabase.realtime.createChannel("items-$userId")
+    
+    channel.postgresChangeFlow<PostgresAction>(schema = "public") {
+        table = "items"
+        filter = "user_id=eq.$userId"
+    }.collect { action ->
+        // Re-fetch full list on any change
+        emit(getItems(userId))
     }
+    
+    supabase.realtime.connect()
+    channel.subscribe()
+    awaitCancellation()
+}.onCompletion {
+    supabase.realtime.removeAllChannels()
 }
-
-// ✅ Hilt binding
-@Binds @Singleton abstract fun bind(impl: ScanRepositoryImpl): ScanRepository
-
-// ✅ ViewModel uses interface only
-class ScanViewModel @Inject constructor(private val repository: ScanRepository) : ViewModel()
 ```
 
----
+## Rule 6: Storage — file upload
 
-## References
+```kotlin
+// ✅ Upload file to Supabase Storage
+suspend fun uploadImage(bucket: String, path: String, data: ByteArray): String {
+    supabase.storage.from(bucket).upload(path, data) {
+        upsert = true
+        contentType = ContentType.Image.JPEG
+    }
+    return supabase.storage.from(bucket).publicUrl(path)
+}
+```
 
-- `references/auth-flows.md` — Email, Google OAuth, session management, deep link setup, common auth errors. Read when implementing any authentication flow.
-- `references/edge-functions.md` — Complete edge function template with auth, CORS, quota, xAI integration. Read when building a new edge function.
-- `rules/` — 12 individual rule files with full examples and anti-patterns for each rule above.
+## Common Mistakes
+
+❌ Missing `persistSession = false` when calling Edge Functions with user JWT
+❌ Using `decodeSingle()` on a list query — use `decodeList()`
+❌ Not making DTOs `@Serializable` — runtime crash on decode
+❌ Calling Supabase on Main thread — all operations are suspend, call from coroutine
+❌ `verify_jwt = true` on Edge Function that handles JWT manually — 401 error
+❌ Not setting up Row Level Security — all users can see all data

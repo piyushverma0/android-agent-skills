@@ -1,594 +1,448 @@
 ---
 name: compose-ui
 description: |
-  Jetpack Compose UI best practices for Android (BOM 2024.x, Material 3 Expressive).
-  Use this skill for ANY @Composable code — state management, LazyColumn/LazyRow,
-  remember/derivedStateOf, recomposition, Modifier chains, AnimatedVisibility,
-  ModalBottomSheet, Scaffold, TopAppBar, navigation-compose, edge-to-edge insets,
-  IME keyboard handling, accessibility (contentDescription, semantics, TalkBack),
-  TextField security, loading/error/empty states, Material 3 theming, dynamic color,
-  dark mode, adaptive layouts, WindowSizeClass, HorizontalPager, Coil image loading,
-  runtime permissions, LaunchedEffect, DisposableEffect, SharedFlow events, @Preview.
+  Jetpack Compose UI best practices for AI agents building Android apps. Use this skill
+  whenever writing any Composable function, building screens, handling UI state, working with
+  Scaffold, LazyColumn, ModalBottomSheet, BottomSheet, edge-to-edge, IME keyboard insets,
+  recomposition, side effects, LaunchedEffect, DisposableEffect, remember, collectAsStateWithLifecycle,
+  StateFlow, SharedFlow, UiState, loading/error/empty states, accessibility semantics,
+  Material 3 components, Coil images, TextField, animations, modifiers, or any Compose layout.
+  Always apply this skill before writing any @Composable function.
 ---
 
-# Jetpack Compose UI
+# Compose UI
 
-Production-complete Compose best practices. 24 rules across 10 categories, ordered by impact.
+24 rules that fix what AI agents consistently get wrong in Jetpack Compose.
 
-## Setup
+## CRITICAL rules — get these wrong and the app is broken
 
-```kotlin
-// build.gradle.kts (app)
-val composeBom = platform("androidx.compose:compose-bom:2024.09.00")
-implementation(composeBom)
-implementation("androidx.compose.ui:ui")
-implementation("androidx.compose.ui:ui-tooling-preview")
-implementation("androidx.compose.material3:material3")
-implementation("androidx.activity:activity-compose:1.9.2")
-implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.5")
-implementation("androidx.navigation:navigation-compose:2.8.1")
-implementation("io.coil-kt.coil3:coil-compose:3.0.0")
-implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.0")
-implementation("com.google.accompanist:accompanist-permissions:0.36.0")
-debugImplementation("androidx.compose.ui:ui-tooling")
-android { buildFeatures { compose = true } }
-```
-
----
-
-## CRITICAL — Layout & Insets
-
-### 1. Edge-to-Edge — mandatory on Android 15+
+### 1. Edge-to-edge + Scaffold innerPadding
 
 ```kotlin
-// MainActivity.kt — call BEFORE setContent
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()   // ← handles SDK compat back to API 21
-        setContent { AppTheme { App() } }
-    }
+// ✅ Always consume Scaffold's innerPadding
+Scaffold(
+    topBar = { TopAppBar(title = { Text("Screen") }) },
+    bottomBar = { BottomNavBar() }
+) { innerPadding ->
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = innerPadding   // ← pass to content, never ignore
+    ) { ... }
 }
 
-// AndroidManifest.xml — enables IME insets
-// android:windowSoftInputMode="adjustResize"
-```
-
-```kotlin
-// Inset modifier cheat sheet
-Modifier.statusBarsPadding()         // top status bar
-Modifier.navigationBarsPadding()     // bottom nav bar
-Modifier.systemBarsPadding()         // both
-Modifier.imePadding()                // software keyboard
-Modifier.safeDrawingPadding()        // status + nav + cutout (use for full-screen content)
-
-// Full-screen content (camera, hero images) — full bleed bg, interactive layer uses insets
-Box(modifier = Modifier.fillMaxSize()) {
-    HeroImage(modifier = Modifier.fillMaxSize())           // draws behind status bar
-    Column(modifier = Modifier.fillMaxSize().systemBarsPadding()) {
-        TopControls()
-        Spacer(modifier = Modifier.weight(1f))
-        BottomControls()
-    }
+// ❌ Never ignore innerPadding — content hides under bars
+Scaffold { _ ->
+    LazyColumn { ... }  // content hidden under top/bottom bars
 }
 ```
 
-### 2. IME / Keyboard Handling
+### 2. ModalBottomSheet navigation bar padding
 
 ```kotlin
-// ✅ imePadding on the container — content animates above keyboard
-Column(modifier = Modifier.fillMaxSize().imePadding()) {
-    MessageList(modifier = Modifier.weight(1f))
-    MessageInputBar()   // stays above keyboard
-}
-
-// ✅ FocusRequester — auto-focus on screen open
-val focusRequester = remember { FocusRequester() }
-LaunchedEffect(Unit) { focusRequester.requestFocus() }
-TextField(modifier = Modifier.focusRequester(focusRequester), ...)
-
-// ✅ FocusManager — dismiss keyboard programmatically
-val focusManager = LocalFocusManager.current
-Button(onClick = { focusManager.clearFocus(); viewModel.submit() }) { Text("Submit") }
-
-// ✅ ImeAction chain for multi-field forms
-OutlinedTextField(
-    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
-)
-```
-
-### 3. Always Consume Scaffold innerPadding
-
-```kotlin
-// ❌ Content hidden behind TopAppBar + BottomBar
-Scaffold(topBar = { ... }) { _ -> Column { Content() } }
-
-// ✅
-Scaffold(topBar = { ... }) { innerPadding ->
-    LazyColumn(contentPadding = innerPadding) {
-        items(list, key = { it.id }) { ItemRow(it) }
-    }
-}
-```
-
-### 4. navigationBarsPadding in BottomSheet — mandatory
-
-```kotlin
-// ❌ CTA hidden behind gesture bar
-ModalBottomSheet(onDismissRequest = {}) { Column { Button { Text("Action") } } }
-
-// ✅
-ModalBottomSheet(
-    onDismissRequest = { showSheet = false },
-    sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-) {
+// ✅ Always add navigationBarsPadding inside BottomSheet content
+ModalBottomSheet(onDismissRequest = { ... }) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .navigationBarsPadding()     // ← mandatory
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 32.dp)
-    ) { SheetContent() }
+            .navigationBarsPadding()   // ← required, content shifts above nav bar
+            .padding(16.dp)
+    ) { ... }
+}
+
+// ❌ Missing navigationBarsPadding — content hidden behind gesture nav bar
+ModalBottomSheet(onDismissRequest = { ... }) {
+    Column(modifier = Modifier.padding(16.dp)) { ... }
 }
 ```
 
----
-
-## CRITICAL — State Management
-
-### 5. Single UiState Data Class Per Screen
+### 3. Single UiState sealed class per screen
 
 ```kotlin
-// ✅ One data class, one StateFlow, atomic updates
-data class ScanUiState(
-    val isSolving: Boolean = false,
-    val result: ScanSolveResponse? = null,
-    val errorMessage: String? = null,
-    val remainingScans: Int = 5
+// ✅ One sealed class represents all screen states
+sealed interface HomeUiState {
+    data object Loading : HomeUiState
+    data class Success(val items: List<Item>) : HomeUiState
+    data class Error(val message: String) : HomeUiState
+    data object Empty : HomeUiState
+}
+
+// ✅ Always handle all states in the Composable
+@Composable
+fun HomeScreen(uiState: HomeUiState) {
+    when (uiState) {
+        is HomeUiState.Loading -> LoadingIndicator()
+        is HomeUiState.Success -> ItemList(uiState.items)
+        is HomeUiState.Error -> ErrorMessage(uiState.message)
+        is HomeUiState.Empty -> EmptyState()
+    }
+}
+
+// ❌ Never use multiple booleans for state — causes impossible states
+data class HomeState(
+    val isLoading: Boolean = false,
+    val isError: Boolean = false,
+    val isEmpty: Boolean = false,
+    val items: List<Item> = emptyList()
 )
-
-private val _uiState = MutableStateFlow(ScanUiState())
-val uiState: StateFlow<ScanUiState> = _uiState.asStateFlow()
-_uiState.update { it.copy(isSolving = true, errorMessage = null) }
-
-// In Composable — collectAsStateWithLifecycle, NEVER collectAsState
-// (pauses when backgrounded — saves battery)
-val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 ```
 
-### 6. One-Shot Events via SharedFlow
+### 4. collectAsStateWithLifecycle — never collectAsState
 
 ```kotlin
-// ✅ Navigation, toasts, snackbars → SharedFlow (never stored in UiState — re-fires on rotation)
-sealed interface ScanEvent {
-    data class ShowError(val message: String) : ScanEvent
-    data class Navigate(val route: String)    : ScanEvent
-    object QuotaExhausted                     : ScanEvent
+// ✅ Lifecycle-aware collection — pauses when app is in background
+val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+// ❌ collectAsState — keeps collecting even when app is backgrounded
+val uiState by viewModel.uiState.collectAsState()
+```
+
+### 5. SharedFlow for one-shot events
+
+```kotlin
+// ✅ SharedFlow for navigation events, toasts, dialogs
+class HomeViewModel : ViewModel() {
+    private val _events = MutableSharedFlow<HomeEvent>()
+    val events: SharedFlow<HomeEvent> = _events.asSharedFlow()
+
+    fun onItemClick(id: String) {
+        viewModelScope.launch {
+            _events.emit(HomeEvent.NavigateToDetail(id))
+        }
+    }
 }
 
-private val _events = MutableSharedFlow<ScanEvent>()
-val events: SharedFlow<ScanEvent> = _events.asSharedFlow()
-
-// Composable
+// ✅ Collect events with LaunchedEffect
 LaunchedEffect(Unit) {
     viewModel.events.collect { event ->
         when (event) {
-            is ScanEvent.Navigate    -> navController.navigate(event.route)
-            is ScanEvent.ShowError   -> snackbarHostState.showSnackbar(event.message)
-            ScanEvent.QuotaExhausted -> navController.navigate(Screen.Upgrade.route)
+            is HomeEvent.NavigateToDetail -> navController.navigate("detail/${event.id}")
         }
     }
 }
+
+// ❌ Never use StateFlow for one-shot events — events replay on recomposition
+private val _navigationEvent = MutableStateFlow<String?>(null)
 ```
 
-### 7. Correct remember Variant
+### 6. LaunchedEffect key rules
 
 ```kotlin
-remember { mutableStateOf(false) }       // ephemeral UI — lost on rotation
-rememberSaveable { mutableStateOf("") }  // user input — survives rotation + process death
-remember { mutableIntStateOf(0) }        // primitives — NEVER mutableStateOf<Int>
-rememberCoroutineScope()                 // for event handlers only, never inline
+// ✅ Use Unit key when effect runs once on composition
+LaunchedEffect(Unit) {
+    viewModel.loadData()
+}
+
+// ✅ Use value key when effect should rerun when value changes
+LaunchedEffect(userId) {
+    viewModel.loadUser(userId)
+}
+
+// ❌ Never use constantly-changing keys — causes infinite re-execution
+LaunchedEffect(System.currentTimeMillis()) { ... }
 ```
 
-### 8. Hoist State, Never Logic in Composition
+### 7. No logic in composition — only rendering
 
 ```kotlin
-// ✅ Stateless composable
+// ✅ Logic in ViewModel, only UI state in Composable
 @Composable
-fun EmailField(value: String, onValueChange: (String) -> Unit, isError: Boolean,
-               modifier: Modifier = Modifier) {
-    OutlinedTextField(value = value, onValueChange = onValueChange, isError = isError,
-        label = { Text("Email") }, modifier = modifier.fillMaxWidth())
+fun ItemCard(item: Item, onLike: (String) -> Unit) {
+    Card(onClick = { onLike(item.id) }) {
+        Text(item.title)
+    }
 }
 
-// ❌ Logic in composition — runs on EVERY recompose
-@Composable fun Wrong(items: List<Item>) { val sorted = items.sortedBy { it.name } }
-// ✅ In ViewModel via StateFlow, or: remember(items) { items.sortedBy { it.name } }
-```
-
-### 9. derivedStateOf — only when derived changes less than inputs
-
-```kotlin
-// ✅ Prevents recompose on every scroll pixel
-val showFab by remember { derivedStateOf { lazyListState.firstVisibleItemIndex > 0 } }
-// ❌ Recomposes entire UI on every pixel
-val showFab = lazyListState.firstVisibleItemIndex > 0
-```
-
----
-
-## CRITICAL — Side Effects
-
-### 10. Key LaunchedEffect on Its Dependency
-
-```kotlin
-LaunchedEffect(userId) { viewModel.loadProfile(userId) }          // ✅ re-runs when userId changes
-LaunchedEffect(errorMessage) {
-    if (errorMessage != null) { snackbarHostState.showSnackbar(errorMessage); viewModel.clearError() }
+// ❌ Never compute in composition — triggers recomposition loops
+@Composable
+fun ItemCard(items: List<Item>) {
+    val filtered = items.filter { it.isActive }  // computation in composition!
+    ...
 }
-LaunchedEffect(Unit) { viewModel.events.collect { ... } }          // ✅ Unit valid for hot flows only
-
-// ❌ Unit key — never re-fires when errorMessage changes
-LaunchedEffect(Unit) { snackbarHostState.showSnackbar(errorMessage) }
 ```
 
-### 11. DisposableEffect for Register/Unregister
+## HIGH impact rules
+
+### 8. LazyColumn — stable keys and contentPadding
 
 ```kotlin
+// ✅ Always provide stable key= for list items
+LazyColumn(
+    contentPadding = PaddingValues(16.dp),
+    verticalArrangement = Arrangement.spacedBy(8.dp)
+) {
+    items(items, key = { it.id }) { item ->   // ← stable key prevents recompose
+        ItemCard(item)
+    }
+}
+
+// ❌ No key — full list recomposition on any change
+LazyColumn { items(items) { item -> ItemCard(item) } }
+```
+
+### 9. Modifier order matters
+
+```kotlin
+// ✅ Correct order: size → padding → background → clickable
+Modifier
+    .fillMaxWidth()
+    .padding(16.dp)
+    .background(MaterialTheme.colorScheme.surface)
+    .clickable { ... }
+
+// ❌ Wrong order changes visual result and hit area
+Modifier
+    .clickable { ... }         // clickable area doesn't include padding
+    .padding(16.dp)
+    .fillMaxWidth()
+```
+
+### 10. AnimatedVisibility — always specify enter/exit
+
+```kotlin
+// ✅ Explicit animation specs
+AnimatedVisibility(
+    visible = isVisible,
+    enter = fadeIn() + expandVertically(),
+    exit = fadeOut() + shrinkVertically()
+) { Content() }
+
+// ❌ Default enter/exit looks janky
+AnimatedVisibility(visible = isVisible) { Content() }
+```
+
+### 11. Type-safe Navigation destinations
+
+```kotlin
+// ✅ Kotlin Serializable destinations — no string routes
+@Serializable
+object HomeRoute
+
+@Serializable
+data class DetailRoute(val itemId: String)
+
+NavHost(navController, startDestination = HomeRoute) {
+    composable<HomeRoute> { HomeScreen() }
+    composable<DetailRoute> { backStackEntry ->
+        val route: DetailRoute = backStackEntry.toRoute()
+        DetailScreen(itemId = route.itemId)
+    }
+}
+
+// ❌ String routes — fragile, no type safety, typos compile
+navController.navigate("detail/$itemId")
+composable("detail/{itemId}") { ... }
+```
+
+### 12. Remember variants — use the right one
+
+```kotlin
+// ✅ remember for values that survive recomposition but not config change
+val scrollState = rememberScrollState()
+
+// ✅ rememberSaveable for values that survive config change (rotation)
+var selectedTab by rememberSaveable { mutableStateOf(0) }
+
+// ✅ remember with key — recalculate when key changes
+val computation = remember(inputList) { inputList.sortedBy { it.name } }
+
+// ❌ remember without key for derived state — stale value
+val sorted = remember { inputList.sortedBy { it.name } }  // never updates
+```
+
+### 13. DisposableEffect for cleanup
+
+```kotlin
+// ✅ DisposableEffect cleans up when composable leaves
 DisposableEffect(lifecycleOwner) {
     val observer = LifecycleEventObserver { _, event ->
-        if (event == Lifecycle.Event.ON_RESUME) viewModel.refresh()
+        if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshData()
     }
     lifecycleOwner.lifecycle.addObserver(observer)
-    onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }  // ← mandatory
+    onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
 }
 ```
 
----
-
-## CRITICAL — Accessibility
-
-### 12. contentDescription on Every Interactive Element
+### 14. Accessibility semantics
 
 ```kotlin
-// ✅ Icon buttons — non-null description always
-IconButton(onClick = onBack) {
-    Icon(Icons.AutoMirrored.Filled.ArrowBack,
-        contentDescription = stringResource(R.string.cd_navigate_back))
-}
-// ✅ Decorative images — null to skip TalkBack
-Image(painter = heroPainter, contentDescription = null)
+// ✅ Custom actions and descriptions for non-text clickables
+IconButton(
+    onClick = { onLike() },
+    modifier = Modifier.semantics {
+        contentDescription = "Like ${item.title}"
+        role = Role.Button
+    }
+) { Icon(Icons.Default.Favorite, contentDescription = null) }
 
-// ✅ Merge semantics for compound components
-Row(modifier = Modifier.semantics(mergeDescendants = true) {}) {
-    Icon(Icons.Default.Star, contentDescription = null)
-    Text("4.5 rating")   // TalkBack reads: "4.5 rating"
-}
-
-// ✅ Minimum 48dp touch target
-IconButton(onClick = onClose, modifier = Modifier.size(48.dp)) {
-    Icon(Icons.Default.Close, contentDescription = "Close", modifier = Modifier.size(24.dp))
-}
-
-// ✅ stateDescription for dynamic state
-Card(modifier = Modifier.semantics { stateDescription = if (expanded) "expanded" else "collapsed" }) { }
-// ✅ heading() for section titles — enables landmark navigation
-Text("Results", modifier = Modifier.semantics { heading() })
-// ✅ liveRegion for dynamic content updates
-Text("Score: $score", modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+// ✅ mergeDescendants for card accessibility
+Card(
+    modifier = Modifier.semantics(mergeDescendants = true) {}
+) { ... }
 ```
 
----
-
-## CRITICAL — TextField & Forms
-
-### 13. TextField Security and Keyboard Types
+### 15. TextField security
 
 ```kotlin
-// ✅ Password — always PasswordVisualTransformation + visibility toggle
-OutlinedTextField(
+// ✅ Password field with correct input type
+TextField(
     value = password,
     onValueChange = { password = it },
-    visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
-    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-    singleLine = true
+    visualTransformation = PasswordVisualTransformation(),
+    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+    keyboardActions = KeyboardActions(onDone = { onLogin() })
 )
-
-// ✅ Autofill hints — help users, speed up forms
-OutlinedTextField(
-    modifier = Modifier.semantics { contentType = ContentType.EmailAddress },
-    ...
-)
-
-// ✅ Sensitive fields — disable autofill
-OutlinedTextField(
-    modifier = Modifier.semantics { contentType = ContentType.None }, // OTP, PIN, card number
-    ...
-)
-
-// ✅ Validation in ViewModel, not composable
-// ✅ Character limit on all free-text fields
-onValueChange = { if (it.length <= 500) text = it }
-
-// ❌ Never log user input — exposes PII
-// ❌ Never store passwords in UiState/SavedState
 ```
 
----
+## MEDIUM impact rules
 
-## CRITICAL — UX States
-
-### 14. Loading, Error, and Empty States — Never Skip
+### 16. Multi-preview annotations
 
 ```kotlin
-// ✅ Model all states
-sealed interface ScreenState {
-    object Loading : ScreenState
-    data class Success(val data: Data) : ScreenState
-    data class Error(val message: String, val isRetryable: Boolean = true) : ScreenState
-    object Empty : ScreenState
-}
-
-// ✅ Render all states
-when (state) {
-    is ScreenState.Loading -> Box(Modifier.fillMaxSize(), Alignment.Center) {
-        CircularProgressIndicator()
-    }
-    is ScreenState.Success -> SuccessContent(state.data)
-    is ScreenState.Error   -> Column(Modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center) {
-        Icon(Icons.Default.ErrorOutline, null, Modifier.size(48.dp),
-            tint = MaterialTheme.colorScheme.error)
-        Spacer(Modifier.height(16.dp))
-        Text(state.message, textAlign = TextAlign.Center)
-        if (state.isRetryable) {
-            Spacer(Modifier.height(24.dp))
-            Button(onClick = onRetry) { Text("Try again") }
-        }
-    }
-    is ScreenState.Empty   -> Column(Modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center) {
-        Icon(Icons.Default.SearchOff, null, Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(16.dp))
-        Text("No results", style = MaterialTheme.typography.titleMedium)
-        Text("Tap + to add your first item", color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
-// ✅ Pull-to-refresh
-PullToRefreshBox(isRefreshing = uiState.isRefreshing, onRefresh = onRefresh) {
-    LazyColumn { items(list, key = { it.id }) { ItemRow(it) } }
-}
-```
-
----
-
-## CRITICAL — Material 3 Theming
-
-### 15. Dynamic Color, Dark Mode, Color Tokens
-
-```kotlin
-// ✅ Theme setup with dynamic color (Android 12+) and dark mode
+// ✅ Test across phones, large screens, and dark mode
+@Preview(name = "Phone", device = Devices.PHONE)
+@Preview(name = "Tablet", device = Devices.TABLET)
+@Preview(name = "Dark", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-fun AppTheme(darkTheme: Boolean = isSystemInDarkTheme(), dynamicColor: Boolean = true,
-             content: @Composable () -> Unit) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> darkColorScheme(primary = BrandOrange, secondary = BrandYellow)
-        else      -> lightColorScheme(primary = BrandOrange, secondary = BrandYellow)
-    }
-    MaterialTheme(colorScheme = colorScheme, typography = AppTypography, shapes = AppShapes,
-        content = content)
+fun HomeScreenPreview() {
+    MyAppTheme { HomeScreen(uiState = HomeUiState.Success(sampleItems)) }
 }
+```
 
-// ❌ Hardcoded colors — break dark mode
-Text(color = Color.Black)
-// ✅ Always theme tokens
-Text(color = MaterialTheme.colorScheme.onSurface)
+### 17. Material 3 — no hardcoded colors
+
+```kotlin
+// ✅ Always use theme color roles
+Text(text = title, color = MaterialTheme.colorScheme.onSurface)
 Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant))
 
-// ✅ Typography — semantic roles, not raw sizes
-Text(style = MaterialTheme.typography.titleLarge)   // not fontSize = 22.sp
-Text(style = MaterialTheme.typography.bodyMedium)   // not fontSize = 14.sp
-
-// ✅ M3 Expressive spring motion (2025 standard)
-animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
+// ❌ Never hardcode colors — breaks dark mode and dynamic color
+Text(text = title, color = Color(0xFF333333))
 ```
 
----
-
-## HIGH — Lists
-
-### 16. Stable Keys in LazyColumn
+### 18. Coil image loading
 
 ```kotlin
-// ❌ Full rebind on every update, animations broken
-items(questions) { QuestionCard(it) }
-// ✅
-LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-    items(questions, key = { it.id }, contentType = { it.type }) { question ->
-        QuestionCard(question, onClick = { onQuestionClick(question.id) })
-    }
-    item(key = "footer") { if (isLoading) LoadingIndicator() }
-}
-```
-
-### 17. contentPadding — Never Outer Padding on Lazy Lists
-
-```kotlin
-// ❌ Clips scroll indicator
-LazyColumn(modifier = Modifier.padding(16.dp)) { ... }
-// ✅
-LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) { ... }
-// ❌ Nested scroll containers — crash
-Column(modifier = Modifier.verticalScroll(...)) { LazyColumn { ... } }
-```
-
----
-
-## HIGH — Modifier Chains
-
-### 18. Modifier Order and Touch Targets
-
-```kotlin
-// padding + background order changes visual output
-Modifier.background(Color.Red).padding(16.dp)  // padding INSIDE color
-Modifier.padding(16.dp).background(Color.Red)  // padding OUTSIDE color
-// clickable before padding = larger touch target
-Modifier.clickable { }.padding(16.dp)          // ✅
-// Every public composable: modifier as last param, defaulted
-@Composable fun Card(title: String, modifier: Modifier = Modifier) { ... }
-```
-
----
-
-## HIGH — Animations
-
-### 19. AnimatedVisibility with Explicit Specs
-
-```kotlin
-// ❌ Snaps — no transition
-AnimatedVisibility(visible = show) { Content() }
-// ✅
-AnimatedVisibility(
-    visible = uiState.isSolving,
-    enter = fadeIn(tween(300)) + slideInVertically(tween(340)) { it / 3 },
-    exit  = fadeOut(tween(200)) + slideOutVertically(tween(200)) { it / 3 }
-) { SolvingIndicator() }
-
-// ✅ label is required on every animate*AsState (Animation Inspector)
-val rotation by animateFloatAsState(if (expanded) 180f else 0f, tween(300), label = "chevron")
-```
-
----
-
-## HIGH — Navigation
-
-### 20. Type-Safe Routes
-
-```kotlin
-sealed class Screen(val route: String) {
-    object Home : Screen("home")
-    object ScanResult : Screen("scan_result/{id}") {
-        const val ARG = "id"
-        fun createRoute(id: String) = "scan_result/$id"
-    }
-}
-// ✅ Navigate with route helper
-navController.navigate(Screen.ScanResult.createRoute(question.id))
-// ✅ Pass primitive IDs only — fetch full object in destination ViewModel
-```
-
----
-
-## HIGH — Adaptive Layouts
-
-### 21. WindowSizeClass for Tablet, Foldable, Desktop
-
-```kotlin
-val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-when (windowSizeClass.windowWidthSizeClass) {
-    WindowWidthSizeClass.COMPACT -> BottomNavScaffold(content)    // phone
-    else                         -> NavRailScaffold(content)       // tablet / foldable
-}
-
-// ✅ Responsive grid
-val columns = when (windowSizeClass.windowWidthSizeClass) {
-    WindowWidthSizeClass.COMPACT  -> 1
-    WindowWidthSizeClass.MEDIUM   -> 2
-    else                          -> 3
-}
-LazyVerticalGrid(columns = GridCells.Fixed(columns)) { ... }
-
-// ✅ HorizontalPager with synced TabRow
-val pagerState = rememberPagerState(pageCount = { tabs.size })
-TabRow(selectedTabIndex = pagerState.currentPage) {
-    tabs.forEachIndexed { i, tab ->
-        Tab(selected = pagerState.currentPage == i,
-            onClick = { scope.launch { pagerState.animateScrollToPage(i) } },
-            text = { Text(tab) })
-    }
-}
-HorizontalPager(state = pagerState) { page -> TabContent(page) }
-```
-
----
-
-## HIGH — Images & Permissions
-
-### 22. Coil Image Loading
-
-```kotlin
-// ✅ AsyncImage with size constraint (prevents OOM for thumbnails)
+// ✅ AsyncImage with contentScale and placeholder
 AsyncImage(
     model = ImageRequest.Builder(LocalContext.current)
-        .data(imageUrl)
+        .data(url)
         .crossfade(true)
-        .size(128, 128)                            // ← only load what you display
         .build(),
-    contentDescription = stringResource(R.string.cd_image),
+    contentDescription = description,
     contentScale = ContentScale.Crop,
-    placeholder = painterResource(R.drawable.img_placeholder),
-    error = painterResource(R.drawable.img_error),
-    modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(12.dp))
+    placeholder = painterResource(R.drawable.placeholder),
+    error = painterResource(R.drawable.error_image),
+    modifier = Modifier.fillMaxWidth().aspectRatio(16f/9f)
 )
 ```
 
-### 23. Runtime Permissions
+### 19. WindowInsets — IME keyboard handling
 
 ```kotlin
+// ✅ Shift content above keyboard automatically
+Scaffold(
+    modifier = Modifier.imePadding()
+) { innerPadding ->
+    Column(modifier = Modifier.padding(innerPadding)) {
+        TextField(value = text, onValueChange = { text = it })
+    }
+}
+```
+
+### 20. Runtime permissions in Compose
+
+```kotlin
+// ✅ rememberPermissionState from Accompanist/Compose Permissions
 val cameraPermission = rememberPermissionState(Manifest.permission.CAMERA)
-when {
-    cameraPermission.status.isGranted          -> CameraPreview()
-    cameraPermission.status.shouldShowRationale -> RationaleCard(onRequest = { cameraPermission.launchPermissionRequest() })
-    else                                        -> RequestCard(onRequest = { cameraPermission.launchPermissionRequest() })
+
+LaunchedEffect(Unit) {
+    if (!cameraPermission.status.isGranted) {
+        cameraPermission.launchPermissionRequest()
+    }
 }
-// ✅ API 33+ images: READ_MEDIA_IMAGES not READ_EXTERNAL_STORAGE
-// ✅ Never request on app launch — request when user needs the feature
 ```
 
----
-
-## MEDIUM — Previews
-
-### 24. Multi-Preview + PreviewParameterProvider
+### 21. Scaffold with FAB and SnackbarHost
 
 ```kotlin
-@Preview(name = "Light", uiMode = UI_MODE_NIGHT_NO, showBackground = true)
-@Preview(name = "Dark",  uiMode = UI_MODE_NIGHT_YES, showBackground = true)
-@Preview(name = "Large Font", fontScale = 1.5f, showBackground = true)
-annotation class ThemePreviews
+// ✅ Complete Scaffold setup
+val snackbarHostState = remember { SnackbarHostState() }
 
-@ThemePreviews
-@Composable
-private fun QuestionCardPreview() {
-    AppTheme { QuestionCard(question = sampleQuestion, onClick = {}) }
+Scaffold(
+    topBar = { TopAppBar(title = { Text("Home") }) },
+    floatingActionButton = {
+        FloatingActionButton(onClick = onCreate) {
+            Icon(Icons.Default.Add, contentDescription = "Create")
+        }
+    },
+    snackbarHost = { SnackbarHost(snackbarHostState) }
+) { innerPadding ->
+    Content(modifier = Modifier.padding(innerPadding))
 }
-
-class ScanStateProvider : PreviewParameterProvider<ScanUiState> {
-    override val values = sequenceOf(ScanUiState(), ScanUiState(isSolving = true),
-        ScanUiState(errorMessage = "Quota exhausted"))
-}
-@Preview(showBackground = true)
-@Composable
-private fun ScanPreview(@PreviewParameter(ScanStateProvider::class) state: ScanUiState) {
-    AppTheme { ScanScreenContent(uiState = state) }
-}
-// ❌ Always mark previews private
-// ❌ Never preview without AppTheme — M3 components crash
 ```
 
----
+### 22. Surface vs Box — use Surface for clickable containers
 
-## References
+```kotlin
+// ✅ Surface handles elevation, ripple, shape, and color role
+Surface(
+    onClick = { onItemClick(item.id) },
+    shape = MaterialTheme.shapes.medium,
+    tonalElevation = 2.dp
+) { CardContent(item) }
 
-- `references/animations.md` — Full animation API: all enter/exit specs, Crossfade, updateTransition, rememberInfiniteTransition, Animatable, AnimatedContent, shared elements, AnimationSpec guide. Read when adding any animation.
-- `references/testing.md` — ComposeTestRule variants, testTag placement, node finders, actions, assertions, waitUntil, Hilt setup, navigation testing, Paparazzi. Read when writing Compose UI tests.
-- `rules/` — 24 individual rule files with full examples and anti-patterns. Each file is the authoritative source for its rule.
+// ❌ Box has no elevation or ripple semantics
+Box(modifier = Modifier.clickable { onItemClick(item.id) }) { CardContent(item) }
+```
+
+### 23. Stateless Composables — hoist state up
+
+```kotlin
+// ✅ Stateless composable — testable and reusable
+@Composable
+fun SearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    TextField(value = query, onValueChange = onQueryChange, modifier = modifier)
+}
+
+// ❌ Stateful — owns state internally, hard to test, not reusable
+@Composable
+fun SearchBar() {
+    var query by remember { mutableStateOf("") }
+    TextField(value = query, onValueChange = { query = it })
+}
+```
+
+### 24. Adaptive layout with WindowSizeClass
+
+```kotlin
+// ✅ Respond to window size — see adaptive-ui skill for full rules
+val windowSizeClass = calculateWindowSizeClass(activity)
+when (windowSizeClass.widthSizeClass) {
+    WindowWidthSizeClass.Compact -> PhoneLayout()
+    WindowWidthSizeClass.Medium -> TabletLayout()
+    WindowWidthSizeClass.Expanded -> DesktopLayout()
+}
+```
+
+## Common Mistakes (Quick Reference)
+
+| ❌ Wrong | ✅ Right |
+|---|---|
+| `collectAsState()` | `collectAsStateWithLifecycle()` |
+| Ignoring `innerPadding` | `contentPadding = innerPadding` |
+| Multiple state booleans | Single `sealed interface UiState` |
+| String routes | `@Serializable` route objects |
+| Hardcoded colors | `MaterialTheme.colorScheme.*` |
+| Logic in `@Composable` | Logic in ViewModel |
+| StateFlow for events | SharedFlow for events |
+| No `key=` in LazyColumn | `items(list, key = { it.id })` |
+
+## Deep-dive references
+
+- `references/side-effects.md` — complete LaunchedEffect / DisposableEffect / SideEffect guide
+- `references/state-management.md` — derivedStateOf, snapshotFlow, state in multi-module apps
+- `references/compose-performance.md` — stability, skippable composables, baseline profiles

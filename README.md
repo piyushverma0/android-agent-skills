@@ -17,7 +17,7 @@
 
 ## Why I built this
 
-I'm Piyush — a solo Android builder from Banda, UP. I build entire apps using AI agents. And for a long time, every app I shipped had the same problems:
+I'm Piyush — a solo Android builder from UP, India. I build entire apps using AI agents. And for a long time, app I shipped had the same problems:
 
 - Layouts that looked broken on my tablet but fine on my phone
 - Every screen with a different visual style, like five different designers worked on it

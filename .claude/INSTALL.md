@@ -1,66 +1,73 @@
-# Android Agent Skills — Claude Code Installation
+# Android Agent Skills — Claude Code
 
-You are Claude Code. Follow these instructions to install android-agent-skills for this project.
+You are Claude Code. Read these instructions fully and follow them.
 
-## What you're installing
+## What you are installing
 
-`android-agent-skills` is a collection of 5 Android/Kotlin skills (68 rules, 85 files) that teach you production-grade Android patterns. Once installed, you will automatically apply these rules when working on Android projects — no user prompt needed.
+27 Android/Kotlin skills, 180+ production rules covering the full app lifecycle:
+project setup → Compose UI → architecture → data layer → platform features → testing → Play Store.
 
-## Installation steps
+Once installed, you will automatically apply the right patterns without being asked.
 
-1. **Determine the install location.**
+## Install steps
 
-   - If the user wants project-level skills (this project only): use `.claude/skills/`
-   - If the user wants global skills (all projects): use `~/.claude/skills/`
-   - Ask the user if you're not sure.
+**1. Ask the user which scope they want:**
+- Global (recommended — all projects): `~/.claude/skills/`
+- Project only (this project): `.claude/skills/`
+- Default to global if they don't specify.
 
-2. **Clone or download the skills.**
-
-   Run the following command:
-
-   ```bash
-   npx skills add piyushverma0/android-agent-skills -a claude-code
-   ```
-
-   If `npx` is unavailable, manually clone:
-
-   ```bash
-   git clone --depth=1 https://github.com/piyushverma0/android-agent-skills.git /tmp/android-agent-skills
-   cp -r /tmp/android-agent-skills/skills/* .claude/skills/
-   rm -rf /tmp/android-agent-skills
-   ```
-
-3. **Verify the install.**
-
-   Confirm these skill directories exist:
-   - `.claude/skills/compose-ui/SKILL.md`
-   - `.claude/skills/supabase-android/SKILL.md`
-   - `.claude/skills/kotlin-patterns/SKILL.md`
-   - `.claude/skills/hilt-di/SKILL.md`
-   - `.claude/skills/android-architecture/SKILL.md`
-
-4. **Tell the user installation is complete.**
-
-   Say: "Android Agent Skills installed. I'll now automatically apply compose-ui, supabase-android, kotlin-patterns, hilt-di, and android-architecture rules when you're building Android apps."
-
-## What these skills do
-
-| Skill | Rules | Triggers |
-| --- | --- | --- |
-| `compose-ui` | 24 | @Composable, LazyColumn, ModalBottomSheet, Scaffold, collectAsStateWithLifecycle, edge-to-edge |
-| `supabase-android` | 11 | supabase-kt, persistSession, getUser(jwt), UnauthorizedRestException |
-| `kotlin-patterns` | 12 | StateFlow, viewModelScope, sealed interface, coroutines, runCatching |
-| `hilt-di` | 10 | @HiltViewModel, @Binds, @Provides, Dagger errors, KSP |
-| `android-architecture` | 11 | ViewModel, Repository, UiState, UiEvent, MVVM, data layer |
-
-## After installation
-
-- You do NOT need to be told to use these skills. Read the relevant SKILL.md automatically when the user's task matches the trigger keywords.
-- Load skills progressively: name + description always in context, full SKILL.md on trigger, references/ files on demand.
-- If the user asks you to "use the compose-ui skill", load `.claude/skills/compose-ui/SKILL.md` immediately.
-
-## Updating
+**2. Run the install:**
 
 ```bash
-npx skills update
+# Global install
+git clone --depth=1 https://github.com/piyushverma0/android-agent-skills.git /tmp/aas \
+  && mkdir -p ~/.claude/skills \
+  && cp -r /tmp/aas/skills/* ~/.claude/skills/ \
+  && rm -rf /tmp/aas \
+  && echo "✅ Installed $(ls ~/.claude/skills/ | wc -l) skills globally"
+
+# Project install
+git clone --depth=1 https://github.com/piyushverma0/android-agent-skills.git /tmp/aas \
+  && mkdir -p .claude/skills \
+  && cp -r /tmp/aas/skills/* .claude/skills/ \
+  && rm -rf /tmp/aas \
+  && echo "✅ Installed $(ls .claude/skills/ | wc -l) skills for this project"
+```
+
+**3. Verify these exist:**
+- `compose-ui/SKILL.md` — Compose rules (24 rules)
+- `adaptive-ui/SKILL.md` — responsive layouts
+- `design-system/SKILL.md` — M3 Expressive tokens
+- `android-architecture/SKILL.md` — MVVM + Clean
+- `android-testing/SKILL.md` — testing patterns
+
+**4. Tell the user:**
+
+"✅ Android Agent Skills installed — 27 skills ready. I'll now automatically write production-quality Jetpack Compose code, adaptive layouts that work on tablets and foldables, consistent M3 Expressive design, Hilt DI, Room, Retrofit, tests, and guide you through Play Store release. No extra prompting needed."
+
+## How I use these skills
+
+- I read SKILL.md files automatically when your task matches trigger keywords in their description
+- I never wait to be told to use a skill — keywords trigger loading automatically
+- Progressive loading: ~50 tokens per skill at startup, full rules only when triggered
+- All 27 skills at startup cost ~1,350 tokens total — no performance impact
+
+## Manual invocation
+
+```
+/compose-ui           # load Compose rules now
+/adaptive-ui          # load adaptive layout rules now
+/android-testing      # load testing rules now
+
+# Or in a prompt:
+"Using the design-system skill, build a consistent button component"
+```
+
+## Update skills
+
+```bash
+git clone --depth=1 https://github.com/piyushverma0/android-agent-skills.git /tmp/aas \
+  && cp -r /tmp/aas/skills/* ~/.claude/skills/ \
+  && rm -rf /tmp/aas \
+  && echo "✅ Updated"
 ```

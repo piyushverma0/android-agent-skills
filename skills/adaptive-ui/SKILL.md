@@ -1,90 +1,105 @@
 ---
 name: adaptive-ui
 description: |
-  Adaptive UI for Android — responsive layouts that work on all screen sizes, foldables,
-  and Chromebooks. Use this skill whenever building any screen that should work on phones,
-  tablets, foldables, or large screens. Triggers on: WindowSizeClass, ListDetailPaneScaffold,
-  SupportingPaneScaffold, NavigationSuiteScaffold, adaptive layout, responsive, WindowWidthSizeClass,
-  WindowHeightSizeClass, tablet layout, foldable, FoldingFeature, two-pane, landscape,
-  Chromebook, large screen, LazyVerticalGrid, GridCells.Adaptive, PaneScaffold, ThreePaneScaffold,
-  adaptive navigation, NavigationRail, NavigationDrawer. Apply this skill to EVERY screen —
-  AI agents that skip this produce phone-only apps that look broken on tablets.
+  Adaptive UI for Android — responsive layouts for phones, tablets, foldables, Chromebooks,
+  and large screens. Use this skill for EVERY screen you build. Triggers on: WindowSizeClass,
+  ListDetailPaneScaffold, SupportingPaneScaffold, ThreePaneScaffold, NavigationSuiteScaffold,
+  NavigationRail, NavigationDrawer, adaptive layout, responsive, tablet layout, foldable,
+  FoldingFeature, two-pane, large screen, GridCells.Adaptive, WindowWidthSizeClass,
+  WindowHeightSizeClass, landscape, Chromebook, bottom sheet to side sheet, dialog sizing,
+  content width, LazyVerticalGrid, breakpoints, hinge, fold state. Apply to EVERY screen
+  — AI agents without this produce phone-only apps on 1B+ large-screen Android devices.
 ---
 
-# Adaptive UI
+# Adaptive UI — Every Screen, Every Device
 
-Android has 1B+ active large-screen devices. AI agents that ignore this ship broken apps.
-These rules make every screen work on phones, tablets, foldables, and Chromebooks automatically.
+Android has 1B+ active large-screen devices. Every screen must work on phones, tablets,
+foldables, and Chromebooks. These 10 rules make that happen automatically.
 
 ## The golden rule
 
-**Every layout decision must ask: how does this look at 600dp+ width?**
-If the answer is "one column of stretched content", it's wrong.
+**Before placing any layout element: ask how it looks at 600dp width AND 840dp width.**
+If the answer is "one stretched column" — it's wrong.
 
-## Step 1: Setup WindowSizeClass
+## Setup — required dependencies
 
-```kotlin
-// libs.versions.toml
-adaptive = "1.0.0"
-adaptive-layout = "1.0.0"
+```toml
+[versions]
+material3Adaptive = "1.1.0"
 
 [libraries]
-androidx-adaptive = { group = "androidx.compose.material3.adaptive", name = "adaptive", version.ref = "adaptive" }
-androidx-adaptive-layout = { group = "androidx.compose.material3.adaptive", name = "adaptive-layout", version.ref = "adaptive-layout" }
-androidx-adaptive-navigation = { group = "androidx.compose.material3.adaptive", name = "adaptive-navigation", version.ref = "adaptive-layout" }
+material3-adaptive = { group = "androidx.compose.material3.adaptive", name = "adaptive", version.ref = "material3Adaptive" }
+material3-adaptive-layout = { group = "androidx.compose.material3.adaptive", name = "adaptive-layout", version.ref = "material3Adaptive" }
+material3-adaptive-navigation = { group = "androidx.compose.material3.adaptive", name = "adaptive-navigation", version.ref = "material3Adaptive" }
+windowSizeClass = { group = "androidx.compose.material3", name = "material3-window-size-class", version.ref = "material3" }
 ```
 
-```kotlin
-// MainActivity.kt
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            MyAppTheme {
-                val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-                MyApp(windowSizeClass = windowSizeClass)
-            }
-        }
-    }
-}
-```
-
-## Step 2: NavigationSuiteScaffold — auto-adapts navigation
+## Rule 1: NavigationSuiteScaffold — zero-code adaptive navigation
 
 ```kotlin
-// ✅ One component handles BottomBar/Rail/Drawer based on screen size
+// ✅ One component → BottomBar on phone, Rail on tablet, Drawer on large screen
 @Composable
-fun MyApp(windowSizeClass: WindowSizeClass) {
+fun MyApp() {
     val navController = rememberNavController()
-    val currentDestination by navController.currentBackStackEntryAsState()
+    val currentEntry by navController.currentBackStackEntryAsState()
 
     NavigationSuiteScaffold(
         navigationSuiteItems = {
-            TopLevelDestination.entries.forEach { destination ->
+            TopLevelRoute.entries.forEach { route ->
                 item(
-                    selected = currentDestination?.destination?.hasRoute(destination.route) == true,
-                    onClick = { navController.navigate(destination.route) { launchSingleTop = true } },
-                    icon = { Icon(destination.icon, contentDescription = null) },
-                    label = { Text(stringResource(destination.labelRes)) }
+                    selected = currentEntry?.destination?.hasRoute(route.routeClass) == true,
+                    onClick = { navController.navigateTopLevel(route) },
+                    icon = {
+                        Icon(
+                            if (currentEntry?.destination?.hasRoute(route.routeClass) == true)
+                                route.selectedIcon else route.icon,
+                            contentDescription = stringResource(route.labelRes)
+                        )
+                    },
+                    label = { Text(stringResource(route.labelRes)) },
+                    badge = if (route.badgeCount > 0) {
+                        { Badge { Text("${route.badgeCount}") } }
+                    } else null
                 )
             }
         }
     ) {
-        AppNavHost(navController = navController)
+        AppNavHost(navController)
     }
 }
+// Compact  (< 600dp): BottomNavigationBar
+// Medium   (600-840dp): NavigationRail
+// Expanded (> 840dp): NavigationDrawer (permanent)
+// No extra code needed — ever.
 
-// On phone (< 600dp): renders BottomNavigationBar
-// On tablet (600-1200dp): renders NavigationRail
-// On large screen (> 1200dp): renders NavigationDrawer
-// ZERO extra code needed
+// ✅ Define top-level routes
+enum class TopLevelRoute(
+    val routeClass: KClass<*>,
+    val icon: ImageVector,
+    val selectedIcon: ImageVector,
+    @StringRes val labelRes: Int,
+    val badgeCount: Int = 0
+) {
+    Home(HomeRoute::class, Icons.Outlined.Home, Icons.Filled.Home, R.string.home),
+    Search(SearchRoute::class, Icons.Outlined.Search, Icons.Filled.Search, R.string.search),
+    Inbox(InboxRoute::class, Icons.Outlined.Inbox, Icons.Filled.Inbox, R.string.inbox, badgeCount = 3),
+    Profile(ProfileRoute::class, Icons.Outlined.Person, Icons.Filled.Person, R.string.profile),
+}
+
+// ✅ Top-level navigate helper — prevents duplicate backstack entries
+fun NavController.navigateTopLevel(route: TopLevelRoute) {
+    navigate(route.routeClass.objectInstance ?: return) {
+        popUpTo(graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
 ```
 
-## Step 3: ListDetailPaneScaffold — master-detail layouts
+## Rule 2: ListDetailPaneScaffold — master-detail for all list screens
 
 ```kotlin
-// ✅ The correct pattern for lists with detail views (email, settings, etc.)
+// ✅ Every list+detail screen should use this — replaces simple NavHost navigation
 @Composable
 fun ItemsScreen() {
     val navigator = rememberListDetailPaneScaffoldNavigator<String>()
@@ -94,221 +109,323 @@ fun ItemsScreen() {
     }
 
     ListDetailPaneScaffold(
-        directive = navigator.scaffoldDirective,
-        value = navigator.scaffoldValue,
-        listPane = {
+        directive   = navigator.scaffoldDirective,
+        value       = navigator.scaffoldValue,
+        listPane    = {
             AnimatedPane {
                 ItemListPane(
-                    onItemClick = { itemId ->
-                        navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, itemId)
+                    onItemSelected = { id ->
+                        navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, id)
                     }
                 )
             }
         },
-        detailPane = {
+        detailPane  = {
             AnimatedPane {
                 val itemId = navigator.currentDestination?.content
                 if (itemId != null) {
                     ItemDetailPane(itemId = itemId)
                 } else {
-                    EmptyDetailPane()  // shown on large screens when nothing selected
+                    // Large screen placeholder when nothing selected
+                    Box(Modifier.fillMaxSize(), Alignment.Center) {
+                        Text("Select an item", style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
         }
     )
 }
-
-// On phone: shows list OR detail (navigates between them)
-// On tablet/desktop: shows list AND detail side-by-side automatically
+// Phone: list screen → tap → detail screen (back button returns to list)
+// Tablet: list + detail side by side, selection updates detail pane live
 ```
 
-## Step 4: Breakpoint-based layout decisions
+## Rule 3: WindowSizeClass breakpoints — 3 layout tiers
 
 ```kotlin
-// ✅ WindowWidthSizeClass — the primary breakpoint
+// ✅ Access WindowSizeClass from composable hierarchy
 @Composable
-fun ProductScreen(
-    windowSizeClass: WindowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-) {
-    val isExpanded = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.EXPANDED
-    val isMedium = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.MEDIUM
+fun MyScreen() {
+    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+    val isCompact  = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT   // < 600dp
+    val isMedium   = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.MEDIUM    // 600-840dp
+    val isExpanded = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.EXPANDED  // > 840dp
 
     when {
-        isExpanded -> ProductExpandedLayout()    // > 840dp  — desktop-like
-        isMedium -> ProductMediumLayout()        // 600-840dp — tablet
-        else -> ProductCompactLayout()           // < 600dp  — phone
+        isExpanded -> ExpandedLayout()   // desktop-like, two or three columns
+        isMedium   -> MediumLayout()     // tablet, two columns or wider single
+        else       -> CompactLayout()    // phone, single column
     }
 }
 
-// ✅ Helper for common patterns
-@Composable
-fun WindowSizeClass.isCompact() = windowWidthSizeClass == WindowWidthSizeClass.COMPACT
-@Composable
-fun WindowSizeClass.isExpanded() = windowWidthSizeClass == WindowWidthSizeClass.EXPANDED
+// ✅ Extension helpers (add to AdaptiveTokens.kt)
+val WindowSizeClass.isCompact  get() = windowWidthSizeClass == WindowWidthSizeClass.COMPACT
+val WindowSizeClass.isMedium   get() = windowWidthSizeClass == WindowWidthSizeClass.MEDIUM
+val WindowSizeClass.isExpanded get() = windowWidthSizeClass == WindowWidthSizeClass.EXPANDED
+
+// ✅ Also check height for landscape phones (compact height)
+val WindowSizeClass.isShortLandscape get() =
+    windowHeightSizeClass == WindowHeightSizeClass.COMPACT && !isCompact
 ```
 
-## Step 5: Adaptive Grid — the right way to fill horizontal space
+## Rule 4: Adaptive Grid — fills screen width automatically
 
 ```kotlin
-// ✅ GridCells.Adaptive — fills available width automatically
+// ✅ GridCells.Adaptive — correct column count for any screen width
 LazyVerticalGrid(
-    columns = GridCells.Adaptive(minSize = 180.dp),   // as many columns as fit
-    contentPadding = PaddingValues(16.dp),
-    horizontalArrangement = Arrangement.spacedBy(8.dp),
-    verticalArrangement = Arrangement.spacedBy(8.dp)
+    columns = GridCells.Adaptive(minSize = 180.dp),  // as many as fit
+    contentPadding = PaddingValues(Spacing.md),
+    horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+    verticalArrangement   = Arrangement.spacedBy(Spacing.sm)
 ) {
     items(items, key = { it.id }) { item ->
-        ItemCard(item)
+        ItemCard(item, modifier = Modifier.fillMaxWidth())
     }
 }
-// Phone: 2 columns. Tablet: 4-5 columns. Large screen: 6+ columns. Zero code changes.
+// Phone (360dp): 1 column. Standard phone (412dp): 2 columns.
+// Tablet (768dp): 4 columns. Large screen (1200dp): 6 columns. Zero extra code.
 
 // ✅ Fixed columns per breakpoint when design requires control
 @Composable
-fun ProductGrid(windowSizeClass: WindowSizeClass) {
-    val columns = when (windowSizeClass.windowWidthSizeClass) {
-        WindowWidthSizeClass.COMPACT -> 2
-        WindowWidthSizeClass.MEDIUM -> 3
-        else -> 4
+fun DesignControlledGrid(items: List<Item>, windowSizeClass: WindowSizeClass) {
+    val columns = when {
+        windowSizeClass.isExpanded -> GridCells.Fixed(4)
+        windowSizeClass.isMedium   -> GridCells.Fixed(3)
+        else                       -> GridCells.Fixed(2)
     }
-    LazyVerticalGrid(columns = GridCells.Fixed(columns)) { ... }
+    LazyVerticalGrid(columns = columns) { /* ... */ }
 }
 ```
 
-## Step 6: Foldable support
+## Rule 5: Foldable support — FoldingFeature states
 
 ```kotlin
-// ✅ Detect fold state
+// ✅ Detect and respond to fold states
 @Composable
-fun FoldAwareLayout() {
+fun FoldAwareScreen() {
     val windowInfo = currentWindowAdaptiveInfo()
-    val foldingFeature = windowInfo.windowPosture.hingeList.firstOrNull()
+    val posture    = windowInfo.windowPosture
+    val hinges     = posture.hingeList
+
+    val foldingFeature = hinges.firstOrNull()
 
     when {
         foldingFeature?.state == FoldingFeature.State.HALF_OPENED &&
         foldingFeature.orientation == FoldingFeature.Orientation.HORIZONTAL -> {
-            // Book posture — show top/bottom split
-            TableTopLayout()
+            // Tabletop / book posture — split top/bottom
+            TabletopLayout()
         }
         foldingFeature?.state == FoldingFeature.State.FLAT -> {
-            // Fully open like a tablet — show side-by-side
-            TabletLayout()
+            // Fully unfolded — treat as large tablet
+            ExpandedLayout()
         }
         else -> {
-            // Normal phone layout
-            PhoneLayout()
+            // Phone / folded state
+            CompactLayout()
+        }
+    }
+}
+
+// ✅ Tabletop layout — content above, controls below the hinge
+@Composable
+fun TabletopLayout() {
+    Column(Modifier.fillMaxSize()) {
+        // Content above hinge
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            VideoPlayer()   // or map, camera, media player
+        }
+        // Controls below hinge — easy thumb reach
+        Box(Modifier.weight(0.4f).fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)) {
+            PlaybackControls()
         }
     }
 }
 ```
 
-## Step 7: Content width constraints — never stretch text
+## Rule 6: Content width constraints — never stretch text on large screens
 
 ```kotlin
-// ✅ Limit readable content width on large screens
+// ✅ Cap readable content width — typography research: 75 chars max per line
 @Composable
-fun ArticleScreen() {
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val contentWidth = if (maxWidth > 840.dp) 840.dp else maxWidth
-
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.TopCenter
-        ) {
+fun ReadableContent(content: @Composable ColumnScope.() -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val maxContentWidth = minOf(maxWidth, 720.dp)  // never wider than 720dp
+        Box(Modifier.fillMaxSize(), Alignment.TopCenter) {
             Column(
-                modifier = Modifier
-                    .width(contentWidth)
-                    .padding(horizontal = 24.dp)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                ArticleContent()
-            }
+                Modifier.width(maxContentWidth)
+                    .padding(horizontal = Spacing.md)
+                    .verticalScroll(rememberScrollState()),
+                content = content
+            )
         }
     }
 }
 
-// ❌ Full-width text on large screens — 200-char lines are unreadable
-Column(modifier = Modifier.fillMaxWidth()) {
-    Text(text = articleBody)  // 1000dp wide text on landscape tablet
-}
+// ✅ Adaptive horizontal padding
+@Composable
+fun WindowSizeClass.contentPadding() = PaddingValues(
+    horizontal = when {
+        isExpanded -> Spacing.xl    // 32dp on large screen
+        isMedium   -> Spacing.lg    // 24dp on tablet
+        else       -> Spacing.md    // 16dp on phone
+    }
+)
 ```
 
-## Step 8: Adaptive padding — more space on larger screens
+## Rule 7: Bottom sheet → side sheet on tablets
 
 ```kotlin
-// ✅ Padding scales with screen size
+// ✅ Adapt sheet direction to screen width
 @Composable
-fun WindowSizeClass.contentPadding(): PaddingValues = when (windowWidthSizeClass) {
-    WindowWidthSizeClass.COMPACT -> PaddingValues(horizontal = 16.dp, vertical = 12.dp)
-    WindowWidthSizeClass.MEDIUM -> PaddingValues(horizontal = 24.dp, vertical = 16.dp)
-    else -> PaddingValues(horizontal = 32.dp, vertical = 24.dp)
-}
-
-// Usage
-LazyColumn(contentPadding = windowSizeClass.contentPadding()) { ... }
-```
-
-## Step 9: Bottom sheet → side sheet on large screens
-
-```kotlin
-// ✅ Show side sheet on tablets instead of bottom sheet
-@Composable
-fun FilterPanel(
+fun AdaptiveSheet(
     isVisible: Boolean,
     onDismiss: () -> Unit,
-    windowSizeClass: WindowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+    windowSizeClass: WindowSizeClass = currentWindowAdaptiveInfo().windowSizeClass,
+    content: @Composable () -> Unit
 ) {
-    if (windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT) {
+    if (windowSizeClass.isCompact) {
         // Phone: bottom sheet
         if (isVisible) {
             ModalBottomSheet(onDismissRequest = onDismiss) {
-                FilterContent(modifier = Modifier.navigationBarsPadding())
+                Box(Modifier.navigationBarsPadding()) { content() }
             }
         }
     } else {
-        // Tablet: side panel
+        // Tablet/desktop: side sheet from end edge
         AnimatedVisibility(
             visible = isVisible,
-            enter = slideInHorizontally { it },
-            exit = slideOutHorizontally { it }
+            enter = slideInHorizontally(initialOffsetX = { it }),
+            exit  = slideOutHorizontally(targetOffsetX = { it })
         ) {
-            SideSheet(onDismiss = onDismiss) {
-                FilterContent()
+            Box(
+                Modifier.fillMaxHeight().width(360.dp)
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                    .align(Alignment.CenterEnd)
+            ) {
+                Column {
+                    Row(Modifier.fillMaxWidth().padding(Spacing.md),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically) {
+                        Text("Filter", style = MaterialTheme.typography.titleMedium)
+                        IconButton(onDismiss) { Icon(Icons.Default.Close, "Close") }
+                    }
+                    content()
+                }
             }
         }
     }
 }
 ```
 
-## Step 10: Dialog sizing — don't let dialogs fill the screen on tablets
+## Rule 8: Adaptive dialog — constrained on large screens
 
 ```kotlin
-// ✅ Constrain dialog width on large screens
+// ✅ Alert dialogs — constrain width on tablets
 @Composable
-fun ConfirmDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+fun AppDialog(
+    title: String, body: String, onConfirm: () -> Unit, onDismiss: () -> Unit,
+    confirmText: String = "Confirm", dismissText: String = "Cancel"
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        modifier = Modifier.widthIn(max = 400.dp),  // max 400dp on any screen
-        title = { Text("Confirm action") },
-        text = { Text("Are you sure?") },
-        confirmButton = { TextButton(onClick = onConfirm) { Text("Confirm") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        title = { Text(title) },
+        text  = { Text(body, style = MaterialTheme.typography.bodyMedium) },
+        modifier = Modifier.widthIn(max = 400.dp),    // never full-width on tablet
+        confirmButton = { TextButton(onConfirm) { Text(confirmText) } },
+        dismissButton = { TextButton(onDismiss) { Text(dismissText) } }
     )
+}
+
+// ✅ Full-screen dialogs — use Dialog for complex forms on phones, keep them in-place on tablets
+@Composable
+fun AdaptiveFormDialog(
+    isVisible: Boolean, onDismiss: () -> Unit,
+    windowSizeClass: WindowSizeClass = currentWindowAdaptiveInfo().windowSizeClass,
+    content: @Composable () -> Unit
+) {
+    if (!isVisible) return
+    if (windowSizeClass.isCompact) {
+        // Phone: full-screen takeover
+        Dialog(onDismissRequest = onDismiss,
+            properties = DialogProperties(usePlatformDefaultWidth = false)) {
+            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) { content() }
+        }
+    } else {
+        // Tablet: constrained dialog
+        Dialog(onDismissRequest = onDismiss) {
+            Surface(shape = MaterialTheme.shapes.large, modifier = Modifier.widthIn(max = 560.dp)) { content() }
+        }
+    }
+}
+```
+
+## Rule 9: SupportingPaneScaffold — three-pane layouts
+
+```kotlin
+// ✅ Email/document apps: list + detail + supporting info
+@Composable
+fun ThreePaneScreen() {
+    val navigator = rememberSupportingPaneScaffoldNavigator<String>()
+
+    SupportingPaneScaffold(
+        directive = navigator.scaffoldDirective,
+        value     = navigator.scaffoldValue,
+        mainPane  = {
+            AnimatedPane {
+                MainContent(
+                    onShowDetails = { navigator.navigateTo(SupportingPaneScaffoldRole.Supporting, it) }
+                )
+            }
+        },
+        supportingPane = {
+            AnimatedPane {
+                SupportingContent(navigator.currentDestination?.content)
+            }
+        },
+        extraPane = {
+            AnimatedPane {
+                ExtraContent()  // shown only on very large screens (> 1200dp)
+            }
+        }
+    )
+}
+```
+
+## Rule 10: Predictive Back — gesture-driven navigation preview
+
+```kotlin
+// ✅ Enable predictive back in AndroidManifest
+// <application android:enableOnBackInvokedCallback="true">
+
+// ✅ SeekableTransitionState for custom predictive back animation
+@Composable
+fun HomeScreen(navController: NavController) {
+    val scale by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        label = "screenScale"
+    )
+    Box(Modifier.graphicsLayer { scaleX = scale; scaleY = scale }) {
+        ScreenContent()
+    }
+    // NavHost 2.8+ handles predictive back automatically for composable() destinations
 }
 ```
 
 ## Common Mistakes
 
-❌ Using BottomNavigation hardcoded — use NavigationSuiteScaffold
-❌ Fixed column count in grids — use GridCells.Adaptive
-❌ No detail pane — use ListDetailPaneScaffold for list+detail screens
-❌ Full-width text — always cap readable content at 840dp
-❌ Ignoring WindowSizeClass — check it on every screen
-❌ Same padding on all screens — scale padding by window size
-❌ Full-screen dialogs on tablets — constrain with widthIn(max = 400.dp)
-❌ Not handling FoldingFeature — test on foldable emulator
+❌ Hardcoded `BottomNavigation` — use `NavigationSuiteScaffold`
+❌ Single-column layout on tablet — use `ListDetailPaneScaffold` for list+detail
+❌ `LazyColumn` with no grid alternative on large screen — use `GridCells.Adaptive`
+❌ Full-width text — cap at `720.dp` with `widthIn(max = 720.dp)`
+❌ Same `ModalBottomSheet` on tablet — switch to side sheet on medium+
+❌ Fixed-size dialog — use `widthIn(max = 400.dp)` always
+❌ Ignoring `FoldingFeature` — check `windowPosture.hingeList` for foldables
+❌ No `BackHandler` in list-detail — handle back for phone navigation
 
 ## Deep-dive references
 
-- `references/pane-scaffold.md` — SupportingPaneScaffold for complex three-pane layouts
-- `references/adaptive-testing.md` — testing adaptive layouts with resizable emulator
+- `references/three-pane-layouts.md` — complex SupportingPaneScaffold patterns
+- `references/adaptive-testing.md` — resizable emulator testing guide
+- `references/chromebook-support.md` — keyboard/mouse/trackpad support

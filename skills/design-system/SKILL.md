@@ -1,169 +1,100 @@
 ---
 name: design-system
 description: |
-  Design system for Android — consistent spacing, typography, color roles, and components
-  across all screens. Use this skill whenever multiple screens need to look consistent,
-  when creating a theme, defining spacing, type scale, color palette, component library,
-  design tokens, 8dp grid, typography scale, color scheme, brand colors, custom theme,
-  button styles, card styles, component consistency, or when any screen looks visually
-  different from the others. Always apply when starting a new app or adding a new screen —
-  AI agents without this skill produce apps where every screen looks designed by a different person.
+  Global-level design system for Android AI agents — Material 3 Expressive. Use this skill
+  for visual consistency: spacing tokens, 8dp grid, M3 typography scale (15 styles), HCT
+  color system, dynamic color Material You, shape system with morphing, motion tokens,
+  physics-based spring animations, design tokens, AppButton/AppCard/AppTextField components,
+  loading/error/empty states, dark mode, surface containers, tonal elevation, or when any
+  two screens look visually different. Always apply when starting any new screen — without
+  this skill AI agents produce apps where every screen looks designed by a different person.
+  Apply immediately alongside compose-ui, material3, and adaptive-ui skills.
 ---
 
-# Design System
+# Design System — Global Level (M3 Expressive)
 
-A design system makes AI-built apps look professional. Without it, every screen is a snowflake.
-These rules enforce consistency in spacing, typography, color, and components.
+Material 3 Expressive is Google's most advanced design language — physics-based motion,
+HCT color science, shape morphing, and a full token architecture. These rules make
+AI-built apps feel professional, personal, and visually unified across every screen.
 
-## The 8dp grid — foundation of all spacing
-
-Every spacing value must be a multiple of 4dp. Prefer multiples of 8dp.
+## Token architecture — single source of truth
 
 ```kotlin
-// ✅ Design tokens — define once, use everywhere
+// ui/theme/tokens/DesignTokens.kt — define once, reference everywhere
+
 object Spacing {
-    val xs = 4.dp
-    val sm = 8.dp
-    val md = 16.dp
-    val lg = 24.dp
-    val xl = 32.dp
-    val xxl = 48.dp
-    val xxxl = 64.dp
+    val none  = 0.dp
+    val xs    = 4.dp    // micro: badges, icon gaps
+    val sm    = 8.dp    // tight: list item gaps
+    val md    = 16.dp   // standard: screen padding, card padding
+    val lg    = 24.dp   // section: gaps between content groups
+    val xl    = 32.dp   // large: hero padding
+    val xxl   = 48.dp   // extra: section breaks
+    val xxxl  = 64.dp   // massive: onboarding, splash
 }
 
-// ✅ Usage
-Column(
-    verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-    modifier = Modifier.padding(Spacing.md)
-) { ... }
+object Elevation {
+    val none   = 0.dp   // flat — standard cards
+    val level1 = 1.dp   // slightly raised
+    val level2 = 3.dp   // FAB, raised cards
+    val level3 = 6.dp   // dialogs
+    val level4 = 8.dp   // navigation drawers
+    val level5 = 12.dp  // tooltips
+}
 
-// ❌ Arbitrary spacing — inconsistent, impossible to maintain
-modifier = Modifier.padding(13.dp)   // 13dp? not on the grid
-modifier = Modifier.padding(top = 20.dp, bottom = 15.dp, start = 18.dp)
+// M3 Expressive motion duration tokens (replaces ALL hardcoded ms)
+object Duration {
+    const val short1      = 50    // micro: icon swap
+    const val short2      = 100   // fast: color shift
+    const val short3      = 150   // quick: appear short distance
+    const val short4      = 200   // standard fade
+    const val medium1     = 250   // expand/collapse
+    const val medium2     = 300   // default transition
+    const val medium3     = 350   // complex motion
+    const val medium4     = 400   // enter from edge
+    const val long1       = 450   // large surface
+    const val long2       = 500   // full-screen takeover
+    const val extraLong1  = 700   // emphasis / delight
+}
+
+// M3 Expressive easing curves (physics-based)
+object AppEasing {
+    val Standard        = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+    val EmphasizedDecel = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)  // new content entering
+    val EmphasizedAccel = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f)  // content leaving
+    val Linear          = LinearEasing
+}
 ```
 
-## Typography scale
+## Theme setup — dynamic color + MotionScheme
 
 ```kotlin
-// ✅ Extend Material 3's type system with your custom fonts
-val AppTypography = Typography(
-    displayLarge = TextStyle(
-        fontFamily = BrandFontFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 57.sp, lineHeight = 64.sp, letterSpacing = (-0.25).sp
-    ),
-    displayMedium = TextStyle(
-        fontFamily = BrandFontFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 45.sp, lineHeight = 52.sp
-    ),
-    headlineLarge = TextStyle(
-        fontFamily = BrandFontFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 32.sp, lineHeight = 40.sp
-    ),
-    headlineMedium = TextStyle(
-        fontFamily = BrandFontFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 28.sp, lineHeight = 36.sp
-    ),
-    titleLarge = TextStyle(
-        fontFamily = BrandFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 22.sp, lineHeight = 28.sp
-    ),
-    titleMedium = TextStyle(
-        fontFamily = BrandFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 16.sp, lineHeight = 24.sp, letterSpacing = 0.15.sp
-    ),
-    bodyLarge = TextStyle(
-        fontFamily = BrandFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp, lineHeight = 24.sp, letterSpacing = 0.5.sp
-    ),
-    bodyMedium = TextStyle(
-        fontFamily = BrandFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.25.sp
-    ),
-    labelLarge = TextStyle(
-        fontFamily = BrandFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.1.sp
-    ),
-    labelSmall = TextStyle(
-        fontFamily = BrandFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 11.sp, lineHeight = 16.sp, letterSpacing = 0.5.sp
-    )
-)
-
-// ✅ Usage — always use theme text styles, never hardcode
-Text(text = title, style = MaterialTheme.typography.titleLarge)
-Text(text = body, style = MaterialTheme.typography.bodyMedium)
-
-// ❌ Never hardcode font size — breaks when theme changes
-Text(text = title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-```
-
-## Color system — Material 3 color roles
-
-```kotlin
-// ✅ Define custom color scheme from brand colors
-private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF006BFF),           // Brand blue
-    onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = Color(0xFFD8E2FF),
-    onPrimaryContainer = Color(0xFF001A41),
-    secondary = Color(0xFF565E71),
-    onSecondary = Color(0xFFFFFFFF),
-    secondaryContainer = Color(0xFFDAE2F9),
-    onSecondaryContainer = Color(0xFF131C2B),
-    tertiary = Color(0xFF715573),
-    onTertiary = Color(0xFFFFFFFF),
-    background = Color(0xFFFEFBFF),
-    onBackground = Color(0xFF1B1B1F),
-    surface = Color(0xFFFEFBFF),
-    onSurface = Color(0xFF1B1B1F),
-    surfaceVariant = Color(0xFFE1E2EC),
-    onSurfaceVariant = Color(0xFF44464F),
-    error = Color(0xFFBA1A1A),
-    onError = Color(0xFFFFFFFF),
-    errorContainer = Color(0xFFFFDAD6),
-    onErrorContainer = Color(0xFF410002),
-    outline = Color(0xFF74777F),
-    outlineVariant = Color(0xFFC4C6D0)
-)
-
-private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFFAEC6FF),
-    onPrimary = Color(0xFF002E69),
-    primaryContainer = Color(0xFF004495),
-    onPrimaryContainer = Color(0xFFD8E2FF),
-    secondary = Color(0xFFBEC6DC),
-    onSecondary = Color(0xFF283041),
-    secondaryContainer = Color(0xFF3E4759),
-    onSecondaryContainer = Color(0xFFDAE2F9),
-    background = Color(0xFF1B1B1F),
-    onBackground = Color(0xFFE4E2E6),
-    surface = Color(0xFF1B1B1F),
-    onSurface = Color(0xFFE4E2E6)
-)
-
+// ui/theme/AppTheme.kt
 @Composable
-fun MyAppTheme(
+fun AppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,    // Android 12+ Material You
+    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            if (darkTheme) dynamicDarkColorScheme(context)
+            else dynamicLightColorScheme(context)
         }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        darkTheme -> AppDarkColorScheme
+        else      -> AppLightColorScheme
+    }
+
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !darkTheme
+                isAppearanceLightNavigationBars = !darkTheme
+            }
+        }
     }
 
     MaterialTheme(
@@ -175,221 +106,281 @@ fun MyAppTheme(
 }
 ```
 
-## Shape system
+## Color system — HCT-generated M3 palette
 
 ```kotlin
-// ✅ Consistent corner radii across components
-val AppShapes = Shapes(
-    extraSmall = RoundedCornerShape(4.dp),   // chips, small badges
-    small = RoundedCornerShape(8.dp),         // text fields, small cards
-    medium = RoundedCornerShape(12.dp),       // cards, dialogs
-    large = RoundedCornerShape(16.dp),        // bottom sheets, large cards
-    extraLarge = RoundedCornerShape(28.dp)    // large dialogs, side sheets
+// ui/theme/AppColorScheme.kt
+// Generate yours at: material-foundation.com/tools/theme-builder
+// M3 uses HCT (Hue/Chroma/Tone) — perceptually uniform, WCAG contrast by construction
+
+private val AppLightColorScheme = lightColorScheme(
+    primary               = Color(0xFF1A73E8),
+    onPrimary             = Color(0xFFFFFFFF),
+    primaryContainer      = Color(0xFFD3E3FD),
+    onPrimaryContainer    = Color(0xFF041E49),
+    secondary             = Color(0xFF5F6368),
+    onSecondary           = Color(0xFFFFFFFF),
+    secondaryContainer    = Color(0xFFE8EAED),
+    onSecondaryContainer  = Color(0xFF202124),
+    tertiary              = Color(0xFF006E56),
+    onTertiary            = Color(0xFFFFFFFF),
+    tertiaryContainer     = Color(0xFF7AF8D3),
+    onTertiaryContainer   = Color(0xFF002117),
+    error                 = Color(0xFFB3261E),
+    onError               = Color(0xFFFFFFFF),
+    errorContainer        = Color(0xFFF9DEDC),
+    onErrorContainer      = Color(0xFF410E0B),
+    background            = Color(0xFFFEFBFF),
+    onBackground          = Color(0xFF1C1B1F),
+    surface               = Color(0xFFFEFBFF),
+    onSurface             = Color(0xFF1C1B1F),
+    surfaceVariant        = Color(0xFFE7E0EC),
+    onSurfaceVariant      = Color(0xFF49454F),
+    outline               = Color(0xFF79747E),
+    outlineVariant        = Color(0xFFCAC4D0),
+    // Surface container hierarchy — tonal elevation without shadows
+    surfaceContainerLowest  = Color(0xFFFFFFFF),
+    surfaceContainerLow     = Color(0xFFF7F2FA),
+    surfaceContainer        = Color(0xFFF3EDF7),
+    surfaceContainerHigh    = Color(0xFFECE6F0),
+    surfaceContainerHighest = Color(0xFFE6E0E9),
+)
+
+private val AppDarkColorScheme = darkColorScheme(
+    primary               = Color(0xFFAECBFA),
+    onPrimary             = Color(0xFF0A3775),
+    primaryContainer      = Color(0xFF2860C4),
+    onPrimaryContainer    = Color(0xFFD3E3FD),
+    secondary             = Color(0xFFBCC7DC),
+    onSecondary           = Color(0xFF263141),
+    surface               = Color(0xFF141218),
+    onSurface             = Color(0xFFE6E1E5),
+    surfaceVariant        = Color(0xFF49454F),
+    onSurfaceVariant      = Color(0xFFCAC4D0),
+    surfaceContainerLowest  = Color(0xFF0F0D13),
+    surfaceContainerLow     = Color(0xFF1D1B20),
+    surfaceContainer        = Color(0xFF211F26),
+    surfaceContainerHigh    = Color(0xFF2B2930),
+    surfaceContainerHighest = Color(0xFF36343B),
+    error                 = Color(0xFFF2B8B5),
+    errorContainer        = Color(0xFF8C1D18),
+    outline               = Color(0xFF938F99),
+    outlineVariant        = Color(0xFF49454F),
 )
 ```
 
-## Component library — standardize common UI
+## Typography — M3 Expressive 15-style scale
 
 ```kotlin
-// ✅ AppButton — standardized button with consistent sizing
+// ui/theme/AppTypography.kt
+private val BrandFont = FontFamily(
+    Font(R.font.brand_regular,  FontWeight.Normal),
+    Font(R.font.brand_medium,   FontWeight.Medium),
+    Font(R.font.brand_semibold, FontWeight.SemiBold),
+    Font(R.font.brand_bold,     FontWeight.Bold),
+)
+
+val AppTypography = Typography(
+    displayLarge  = TextStyle(fontFamily = BrandFont, fontWeight = FontWeight.Normal,  fontSize = 57.sp, lineHeight = 64.sp,  letterSpacing = (-0.25).sp),
+    displayMedium = TextStyle(fontFamily = BrandFont, fontWeight = FontWeight.Normal,  fontSize = 45.sp, lineHeight = 52.sp),
+    displaySmall  = TextStyle(fontFamily = BrandFont, fontWeight = FontWeight.Normal,  fontSize = 36.sp, lineHeight = 44.sp),
+    headlineLarge  = TextStyle(fontFamily = BrandFont, fontWeight = FontWeight.SemiBold, fontSize = 32.sp, lineHeight = 40.sp),
+    headlineMedium = TextStyle(fontFamily = BrandFont, fontWeight = FontWeight.SemiBold, fontSize = 28.sp, lineHeight = 36.sp),
+    headlineSmall  = TextStyle(fontFamily = BrandFont, fontWeight = FontWeight.SemiBold, fontSize = 24.sp, lineHeight = 32.sp),
+    titleLarge  = TextStyle(fontFamily = BrandFont, fontWeight = FontWeight.Medium, fontSize = 22.sp, lineHeight = 28.sp),
+    titleMedium = TextStyle(fontFamily = BrandFont, fontWeight = FontWeight.Medium, fontSize = 16.sp, lineHeight = 24.sp, letterSpacing = 0.15.sp),
+    titleSmall  = TextStyle(fontFamily = BrandFont, fontWeight = FontWeight.Medium, fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.1.sp),
+    bodyLarge  = TextStyle(fontFamily = BrandFont, fontWeight = FontWeight.Normal, fontSize = 16.sp, lineHeight = 24.sp, letterSpacing = 0.5.sp),
+    bodyMedium = TextStyle(fontFamily = BrandFont, fontWeight = FontWeight.Normal, fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.25.sp),
+    bodySmall  = TextStyle(fontFamily = BrandFont, fontWeight = FontWeight.Normal, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.4.sp),
+    labelLarge  = TextStyle(fontFamily = BrandFont, fontWeight = FontWeight.Medium, fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.1.sp),
+    labelMedium = TextStyle(fontFamily = BrandFont, fontWeight = FontWeight.Medium, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.5.sp),
+    labelSmall  = TextStyle(fontFamily = BrandFont, fontWeight = FontWeight.Medium, fontSize = 11.sp, lineHeight = 16.sp, letterSpacing = 0.5.sp),
+)
+
+// ✅ Always use theme styles — never hardcode font size
+Text("Screen title", style = MaterialTheme.typography.titleLarge)
+Text("Body text", style = MaterialTheme.typography.bodyMedium)
+Text("Button label", style = MaterialTheme.typography.labelLarge)
+
+// ❌ Never hardcode
+Text("Wrong", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+```
+
+## Shape system — M3 10-step scale + asymmetric shapes
+
+```kotlin
+// ui/theme/AppShapes.kt
+val AppShapes = Shapes(
+    extraSmall = RoundedCornerShape(4.dp),    // chips, small tags
+    small      = RoundedCornerShape(8.dp),    // text fields, tooltips
+    medium     = RoundedCornerShape(12.dp),   // cards, menus
+    large      = RoundedCornerShape(16.dp),   // bottom sheets
+    extraLarge = RoundedCornerShape(28.dp),   // nav drawer, large dialogs
+)
+
+// M3 Expressive asymmetric shapes — personality and directional emphasis
+object AsymmetricShapes {
+    val topRounded    = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 4.dp, bottomEnd = 4.dp)
+    val bottomRounded = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = 28.dp, bottomEnd = 28.dp)
+    val startRounded  = RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp, topEnd = 4.dp, bottomEnd = 4.dp)
+    val full          = RoundedCornerShape(50)  // pills, FABs, avatars
+}
+```
+
+## Component library — standard across every screen
+
+```kotlin
+// ✅ AppButton — 5 variants, consistent 48dp height, loading state
+enum class AppButtonVariant { Filled, Tonal, Outlined, Ghost, Destructive }
+
 @Composable
 fun AppButton(
-    text: String,
-    onClick: () -> Unit,
+    text: String, onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    style: ButtonStyle = ButtonStyle.Primary,
+    variant: AppButtonVariant = AppButtonVariant.Filled,
+    leadingIcon: ImageVector? = null,
     isLoading: Boolean = false,
-    enabled: Boolean = true
+    enabled: Boolean = true,
 ) {
-    when (style) {
-        ButtonStyle.Primary -> Button(
-            onClick = onClick,
-            modifier = modifier.height(48.dp),
-            enabled = enabled && !isLoading
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    strokeWidth = 2.dp
-                )
-            } else {
-                Text(text = text, style = MaterialTheme.typography.labelLarge)
+    val enabled2 = enabled && !isLoading
+    val shape = MaterialTheme.shapes.small
+    val content: @Composable RowScope.() -> Unit = {
+        AnimatedContent(isLoading, label = "btnContent") { loading ->
+            if (loading) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = LocalContentColor.current)
+            else Row(verticalAlignment = Alignment.CenterVertically) {
+                if (leadingIcon != null) { Icon(leadingIcon, null, Modifier.size(18.dp)); Spacer(Modifier.width(Spacing.xs)) }
+                Text(text, style = MaterialTheme.typography.labelLarge)
             }
         }
-        ButtonStyle.Secondary -> OutlinedButton(
-            onClick = onClick,
-            modifier = modifier.height(48.dp),
-            enabled = enabled && !isLoading
-        ) {
-            Text(text = text, style = MaterialTheme.typography.labelLarge)
-        }
-        ButtonStyle.Ghost -> TextButton(
-            onClick = onClick,
-            modifier = modifier.height(48.dp),
-            enabled = enabled && !isLoading
-        ) {
-            Text(text = text, style = MaterialTheme.typography.labelLarge)
-        }
+    }
+    val mod = modifier.height(48.dp)
+    when (variant) {
+        AppButtonVariant.Filled      -> Button(onClick, mod, enabled = enabled2, shape = shape, content = content)
+        AppButtonVariant.Tonal       -> FilledTonalButton(onClick, mod, enabled = enabled2, shape = shape, content = content)
+        AppButtonVariant.Outlined    -> OutlinedButton(onClick, mod, enabled = enabled2, shape = shape, content = content)
+        AppButtonVariant.Ghost       -> TextButton(onClick, mod, enabled = enabled2, content = content)
+        AppButtonVariant.Destructive -> Button(onClick, mod, enabled = enabled2, shape = shape,
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer), content = content)
     }
 }
 
-enum class ButtonStyle { Primary, Secondary, Ghost }
-```
+// ✅ AppCard — 3 variants
+enum class CardVariant { Filled, Elevated, Outlined }
 
-```kotlin
-// ✅ AppCard — consistent card styling across all screens
 @Composable
-fun AppCard(
-    modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    val cardModifier = modifier.padding(horizontal = Spacing.md, vertical = Spacing.xs)
-
-    if (onClick != null) {
-        Card(
-            onClick = onClick,
-            modifier = cardModifier,
-            shape = MaterialTheme.shapes.medium,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
-            Column(modifier = Modifier.padding(Spacing.md), content = content)
-        }
-    } else {
-        Card(
-            modifier = cardModifier,
-            shape = MaterialTheme.shapes.medium,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
-            Column(modifier = Modifier.padding(Spacing.md), content = content)
-        }
-    }
+fun AppCard(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, variant: CardVariant = CardVariant.Filled, content: @Composable ColumnScope.() -> Unit) {
+    val inner: @Composable () -> Unit = { Column(Modifier.padding(Spacing.md), content = content) }
+    val shape = MaterialTheme.shapes.medium
+    if (onClick != null) when (variant) {
+        CardVariant.Elevated -> ElevatedCard(onClick, modifier, shape = shape) { inner() }
+        CardVariant.Outlined -> OutlinedCard(onClick, modifier, shape = shape) { inner() }
+        else -> Card(onClick, modifier, shape = shape, elevation = CardDefaults.cardElevation(0.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) { inner() }
+    } else Card(modifier = modifier, shape = shape, elevation = CardDefaults.cardElevation(0.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) { inner() }
 }
-```
 
-```kotlin
-// ✅ AppTextField — consistent text input
+// ✅ AppTextField — error state, support text, icons
 @Composable
 fun AppTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
+    value: String, onValueChange: (String) -> Unit, label: String,
     modifier: Modifier = Modifier,
-    placeholder: String? = null,
-    isError: Boolean = false,
-    errorMessage: String? = null,
+    supportingText: String? = null, isError: Boolean = false, errorText: String? = null,
+    leadingIcon: ImageVector? = null, trailingIcon: (@Composable () -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    singleLine: Boolean = true
+    singleLine: Boolean = true,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
-    Column(modifier = modifier) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            label = { Text(label) },
-            placeholder = placeholder?.let { { Text(it) } },
-            isError = isError,
-            keyboardOptions = keyboardOptions,
-            singleLine = singleLine,
-            shape = MaterialTheme.shapes.small,
-            modifier = Modifier.fillMaxWidth()
-        )
-        if (isError && errorMessage != null) {
-            Text(
-                text = errorMessage,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(start = Spacing.md, top = Spacing.xs)
-            )
-        }
-    }
+    OutlinedTextField(
+        value = value, onValueChange = onValueChange, label = { Text(label) },
+        isError = isError, singleLine = singleLine,
+        visualTransformation = visualTransformation,
+        leadingIcon = leadingIcon?.let { { Icon(it, null) } },
+        trailingIcon = trailingIcon,
+        supportingText = when {
+            isError && errorText != null -> { { Text(errorText, color = MaterialTheme.colorScheme.error) } }
+            supportingText != null -> { { Text(supportingText) } }
+            else -> null
+        },
+        keyboardOptions = keyboardOptions,
+        shape = MaterialTheme.shapes.small,
+        modifier = modifier.fillMaxWidth()
+    )
 }
 ```
 
-## Loading, Empty, and Error states — define once, use everywhere
+## Motion tokens — physics-based, M3 Expressive
 
 ```kotlin
-// ✅ Standard loading state
-@Composable
-fun LoadingScreen(modifier: Modifier = Modifier) {
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-    }
+// ui/theme/tokens/MotionTokens.kt
+object MotionTokens {
+    // Spatial — elements that move or scale (use spring for naturalness)
+    fun spatialEnter() = spring<Float>(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMediumLow)
+    fun spatialExit()  = tween<Float>(Duration.short4, easing = AppEasing.EmphasizedAccel)
+
+    // Effects — color, opacity, elevation (use tween)
+    fun effectsStandard(duration: Int = Duration.medium2) = tween<Float>(duration, easing = AppEasing.Standard)
+    fun effectsDecel(duration: Int = Duration.medium4)    = tween<Float>(duration, easing = AppEasing.EmphasizedDecel)
+
+    // Container — screen-level transitions
+    fun containerEnter() = tween<IntOffset>(Duration.medium4, easing = AppEasing.EmphasizedDecel)
+    fun containerExit()  = tween<IntOffset>(Duration.short4,  easing = AppEasing.EmphasizedAccel)
 }
 
-// ✅ Standard empty state with illustration slot
+// ✅ Usage — always MotionTokens, never tween(300)
+val alpha by animateFloatAsState(
+    targetValue = if (isVisible) 1f else 0f,
+    animationSpec = MotionTokens.effectsStandard(),
+    label = "alpha"
+)
+```
+
+## Screen states — global, use on every screen
+
+```kotlin
 @Composable
-fun EmptyScreen(
-    title: String,
-    description: String,
-    modifier: Modifier = Modifier,
-    action: (@Composable () -> Unit)? = null,
-    illustration: (@Composable () -> Unit)? = null
-) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(Spacing.xl),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
+fun AppLoadingScreen(modifier: Modifier = Modifier) =
+    Box(modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
+
+@Composable
+fun AppEmptyScreen(title: String, body: String, modifier: Modifier = Modifier,
+    illustration: (@Composable () -> Unit)? = null, action: Pair<String, () -> Unit>? = null) {
+    Column(modifier.fillMaxSize().padding(Spacing.xl), Alignment.CenterHorizontally, Arrangement.Center) {
         illustration?.invoke()
-        Spacer(modifier = Modifier.height(Spacing.lg))
-        Text(text = title, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
-        Spacer(modifier = Modifier.height(Spacing.sm))
-        Text(text = description, style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-        if (action != null) {
-            Spacer(modifier = Modifier.height(Spacing.lg))
-            action()
-        }
+        Spacer(Modifier.height(Spacing.lg))
+        Text(title, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(Spacing.sm))
+        Text(body, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (action != null) { Spacer(Modifier.height(Spacing.lg)); AppButton(action.first, action.second) }
     }
 }
 
-// ✅ Standard error state
 @Composable
-fun ErrorScreen(
-    message: String,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(Spacing.xl),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.Error,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
-        )
-        Spacer(modifier = Modifier.height(Spacing.md))
-        Text(text = "Something went wrong", style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.height(Spacing.sm))
-        Text(text = message, style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-        Spacer(modifier = Modifier.height(Spacing.lg))
-        AppButton(text = "Try again", onClick = onRetry)
+fun AppErrorScreen(message: String, onRetry: (() -> Unit)? = null, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxSize().padding(Spacing.xl), Alignment.CenterHorizontally, Arrangement.Center) {
+        Icon(Icons.Rounded.ErrorOutline, null, Modifier.size(64.dp), tint = MaterialTheme.colorScheme.error)
+        Spacer(Modifier.height(Spacing.md))
+        Text("Something went wrong", style = MaterialTheme.typography.titleLarge)
+        Spacer(Modifier.height(Spacing.sm))
+        Text(message, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (onRetry != null) { Spacer(Modifier.height(Spacing.lg)); AppButton("Try again", onRetry, variant = AppButtonVariant.Tonal) }
     }
 }
 ```
 
 ## Common Mistakes
 
-❌ Spacing values not on 4dp grid — always use Spacing.xs/sm/md/lg/xl
-❌ Hardcoded font sizes — always MaterialTheme.typography.*
-❌ Hardcoded colors — always MaterialTheme.colorScheme.*
-❌ Different button heights per screen — standardize to 48.dp
-❌ Custom loading spinners per screen — use LoadingScreen()
-❌ Missing dark mode — always test with darkTheme = true
-❌ No shape system — cards with random cornerRadius values
-
-## Deep-dive references
-
-- `references/design-tokens.md` — full token system for complex apps
-- `references/custom-fonts.md` — loading fonts from assets with FontFamily
+❌ Spacing not on 4dp grid — `padding(13.dp)` use Spacing.sm or Spacing.md
+❌ `fontSize = 20.sp` hardcoded — `MaterialTheme.typography.titleLarge`
+❌ `Color(0xFF333333)` hardcoded — `MaterialTheme.colorScheme.onSurface`
+❌ `cornerRadius = 12.dp` inline — `MaterialTheme.shapes.medium`
+❌ `tween(300)` hardcoded — `MotionTokens.effectsStandard()`
+❌ Different button heights per screen — always 48.dp
+❌ No dark mode testing — check every component with `darkTheme = true`
+❌ Dynamic color disabled — enable for Android 12+, fallback palette for older
+❌ `Color.White` in dark mode — `MaterialTheme.colorScheme.surface`
+❌ `Card(elevation = 4.dp)` — use tonal containers, not shadows: `surfaceContainerHigh`

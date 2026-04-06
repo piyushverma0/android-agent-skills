@@ -1,67 +1,60 @@
-# Android Agent Skills — Codex Installation
+# Android Agent Skills — OpenAI Codex
 
-You are OpenAI Codex. Follow these instructions to install android-agent-skills.
+You are OpenAI Codex. Read these instructions and follow them exactly.
 
-## What you're installing
+## What you are installing
 
-`android-agent-skills` is a collection of 5 Android/Kotlin skills (68 rules, 85 files) that encode production-grade Android patterns into your context. Once installed, you will automatically apply these rules when working on Android projects.
+27 Android/Kotlin skills covering the full app lifecycle — Compose UI, adaptive layouts,
+MVVM architecture, Hilt DI, Room, Retrofit, Firebase, testing, security, and Play Store release.
 
-## Installation steps
+## Install steps
 
-1. **Determine the install location.**
+**1. Determine scope:**
+- Global (all projects): `~/.codex/skills/`
+- Project only: `.codex/skills/`
+- Default to global.
 
-   - Project-level (this project only): `.codex/skills/`
-   - Global (all projects): `~/.codex/skills/`
-   - Default to project-level unless the user says otherwise.
+**2. Run:**
 
-2. **Install the skills.**
+```bash
+# Global
+git clone --depth=1 https://github.com/piyushverma0/android-agent-skills.git /tmp/aas \
+  && mkdir -p ~/.codex/skills \
+  && cp -r /tmp/aas/skills/* ~/.codex/skills/ \
+  && rm -rf /tmp/aas \
+  && echo "Installed $(ls ~/.codex/skills/ | wc -l) skills"
 
-   Run:
+# Project
+git clone --depth=1 https://github.com/piyushverma0/android-agent-skills.git /tmp/aas \
+  && mkdir -p .codex/skills \
+  && cp -r /tmp/aas/skills/* .codex/skills/ \
+  && rm -rf /tmp/aas \
+  && echo "Installed $(ls .codex/skills/ | wc -l) skills"
+```
 
-   ```bash
-   npx skills add piyushverma0/android-agent-skills -a codex
-   ```
+**3. Verify:** confirm `compose-ui/SKILL.md`, `adaptive-ui/SKILL.md`, `android-architecture/SKILL.md` exist.
 
-   If `npx` is unavailable, clone manually:
-
-   ```bash
-   git clone --depth=1 https://github.com/piyushverma0/android-agent-skills.git /tmp/android-agent-skills
-   mkdir -p .codex/skills
-   cp -r /tmp/android-agent-skills/skills/* .codex/skills/
-   rm -rf /tmp/android-agent-skills
-   ```
-
-3. **Verify the install.**
-
-   Confirm these files exist:
-   - `.codex/skills/compose-ui/SKILL.md`
-   - `.codex/skills/supabase-android/SKILL.md`
-   - `.codex/skills/kotlin-patterns/SKILL.md`
-   - `.codex/skills/hilt-di/SKILL.md`
-   - `.codex/skills/android-architecture/SKILL.md`
-
-4. **Confirm to the user.**
-
-   Say: "Android Agent Skills installed (5 skills, 68 rules). I'll automatically apply these when you work on Android/Kotlin code."
+**4. Confirm:** "Android Agent Skills installed — 27 skills covering the full Android lifecycle. Production patterns apply automatically."
 
 ## Skill trigger reference
 
-| Skill | Triggers automatically when you mention... |
-| --- | --- |
-| `compose-ui` | @Composable, LazyColumn, Scaffold, ModalBottomSheet, AnimatedVisibility, edge-to-edge, IME, Material 3, Coil |
-| `supabase-android` | supabase-kt, persistSession, getUser(jwt), UnauthorizedRestException, FunctionsHttpException |
-| `kotlin-patterns` | StateFlow, SharedFlow, viewModelScope, sealed interface, coroutines, runCatching, !! operator |
-| `hilt-di` | @HiltViewModel, @Binds, @Provides, @Singleton, @AndroidEntryPoint, Dagger compile error |
-| `android-architecture` | ViewModel, Repository, UseCase, UiState, UiEvent, MVVM, data layer, domain layer |
+| Skill | Auto-triggers when you mention... |
+|---|---|
+| `compose-ui` | @Composable, LazyColumn, Scaffold, ModalBottomSheet, collectAsStateWithLifecycle |
+| `adaptive-ui` | tablet, WindowSizeClass, ListDetailPaneScaffold, foldable, large screen |
+| `design-system` | spacing, typography, color roles, AppButton, design tokens, M3 Expressive |
+| `android-architecture` | ViewModel, Repository, UseCase, UiState, MVVM, Clean Architecture |
+| `hilt-di` | @HiltViewModel, @Binds, @Provides, @Module, Dagger error |
+| `kotlin-patterns` | StateFlow, coroutines, sealed interface, runCatching, viewModelScope |
+| `room-database` | @Entity, @Dao, Room, migration, TypeConverter |
+| `retrofit` | Retrofit, OkHttp, API service, DTO, endpoint |
+| `android-testing` | test, ViewModel test, Fake, MainDispatcherRule, runTest |
+| `play-store-release` | release, AAB, Play Store, versionCode, targetSdk |
 
-## Behaviour after installation
-
-- Read each SKILL.md automatically when task keywords match — do not wait to be told.
-- Do not front-load all 85 files. Load progressively: description at startup, full SKILL.md on trigger, references/ on demand.
-- If the user asks "use supabase-android skill", read `.codex/skills/supabase-android/SKILL.md` immediately.
-
-## Updating
+## Update
 
 ```bash
-npx skills update
+git clone --depth=1 https://github.com/piyushverma0/android-agent-skills.git /tmp/aas \
+  && cp -r /tmp/aas/skills/* ~/.codex/skills/ \
+  && rm -rf /tmp/aas
 ```

@@ -1,120 +1,171 @@
 # android-agent-skills
 
-> AI agents build Android apps that look broken on tablets, crash on Android 15,  
-> have no design consistency, and ship with zero tests.  
-> **This is the fix.**
+> I was getting 5× token bills every month building Android apps with AI agents.  
+> Same errors. Same Supabase crashes. Same broken screens.  
+> I fixed it by writing these 27 skills.  
+> Now my bills dropped 5×. [FitGenZ AI](https://play.google.com/store/apps/details?id=com.fitgenz) shipped in 18 days.
 
 <p align="center">
-  <a href="https://github.com/piyushverma0/android-agent-skills/stargazers"><img src="https://img.shields.io/github/stars/piyushverma0/android-agent-skills?style=flat-square&color=green" alt="Stars"/></a>
-  <img src="https://img.shields.io/badge/skills-27-blue?style=flat-square" alt="27 skills"/>
-  <img src="https://img.shields.io/badge/rules-180%2B-orange?style=flat-square" alt="180+ rules"/>
-  <img src="https://img.shields.io/badge/license-MIT-purple?style=flat-square" alt="MIT"/>
+  <a href="https://github.com/piyushverma0/android-agent-skills/stargazers">
+    <img src="https://img.shields.io/github/stars/piyushverma0/android-agent-skills?style=flat-square&color=22c55e" alt="Stars"/>
+  </a>
+  <img src="https://img.shields.io/badge/skills-27-3b82f6?style=flat-square" alt="27 skills"/>
+  <img src="https://img.shields.io/badge/rules-180%2B-f59e0b?style=flat-square" alt="180+ rules"/>
+  <img src="https://img.shields.io/badge/bills_reduced-5×-ef4444?style=flat-square" alt="5x less bills"/>
   <img src="https://img.shields.io/badge/Kotlin-2.0%2B-7F52FF?style=flat-square&logo=kotlin" alt="Kotlin 2.0+"/>
-  <img src="https://img.shields.io/badge/M3_Expressive-2025-red?style=flat-square" alt="Material 3 Expressive"/>
+  <img src="https://img.shields.io/badge/license-MIT-8b5cf6?style=flat-square" alt="MIT"/>
 </p>
 
 ---
 
-## Why I built this
+## The honest story — Sarkari Khozo broke my budget
 
-I'm Piyush — a solo Android builder from UP, India. I build entire apps using AI agents. And for a long time, app I shipped had the same problems:
+I'm Piyush. I build Android apps solo using AI agents — Claude Code, Codex, Cursor, Antigravity.
 
-- Layouts that looked broken on my tablet but fine on my phone
-- Every screen with a different visual style, like five different designers worked on it
-- `collectAsState()` instead of `collectAsStateWithLifecycle()` — every single time
-- `kapt` instead of `ksp` — still, in 2026
-- No tests. No CI. No idea if it would survive the Play Store review process
+My first serious Android project was **Sarkari Khozo** — an app that helps Indians find government schemes, exam notifications, and jobs. The idea was solid. The execution was a nightmare.
 
-I got tired of correcting the same mistakes over and over. So I built a library of skills that teach AI agents the right way to build Android apps — once — and never look back.
+Every AI session started the same way. I'd describe what I wanted. The agent would start building. And within 20 minutes, I was correcting the same mistakes I'd corrected the session before.
 
-This repo is the result: **27 skills, 180+ production rules, covering everything from the first `build.gradle.kts` to the Play Store submission checklist.**
-
-If you build Android apps with AI agents, install this. Your agent will write better code, you'll spend less time fixing mistakes, and your users will get apps that actually work on their tablets.
+Here's exactly what was happening to my token budget:
 
 ---
 
-## What AI agents get wrong without these skills
+### The 5 problems that were killing my token budget
 
-Here's what I see in every AI-generated Android codebase before installing these skills:
+**Problem 1: Every screen looked different from the last one**
 
-```kotlin
-// What agents write without compose-ui skill:
-Scaffold { _ ->                        // innerPadding ignored — content hides under nav bar
-    LazyColumn {
-        items(items) { ItemCard(it) }  // no stable key — full recompose on every change
-    }
-}
+The agent had no memory of how I built screen 1 when it started screen 2. Different spacing on every card. `fontSize = 18.sp` here, `fontSize = 20.sp` there. `Color(0xFF1A1A2E)` in one file, `Color(0xFF161622)` in the next. `Modifier.padding(12.dp)` on this screen, `Modifier.padding(16.dp)` on that one.
 
-// What they write without adaptive-ui skill:
-Column(modifier = Modifier.fillMaxWidth()) {
-    ItemList(items)   // one stretched column, looks broken on 1000dp tablet
-}
+By the time I had 8 screens, the app looked like it was designed by 8 different people. I'd spend the first 15-20 minutes of every new session re-explaining my color palette, my spacing, my card style. Every. Single. Session.
 
-// What they write without design-system skill:
-Text("Title", fontSize = 20.sp, color = Color(0xFF333333))  // hardcoded, breaks dark mode
-Card(elevation = 8.dp) { ... }                               // M2 pattern in M3 world
-```
+Token waste: easily 800-1200 tokens per session just re-establishing visual context.
 
-And here's what they write **with** these skills installed:
+**Problem 2: Supabase auth broke in production, not in dev**
+
+This one cost me a week and probably ₹3,000 in tokens trying to debug it.
+
+The agent kept writing this:
 
 ```kotlin
-// With compose-ui — every state handled, correct padding, lifecycle-aware
-Scaffold { innerPadding ->
-    when (uiState) {
-        is Loading -> AppLoadingScreen()
-        is Empty   -> AppEmptyScreen("No items", "Add your first item")
-        is Success -> LazyColumn(contentPadding = innerPadding) {
-            items(uiState.items, key = { it.id }) { ItemCard(it) }
-        }
-        is Error   -> AppErrorScreen(uiState.message, onRetry)
-    }
+// What agents write without the supabase-android skill
+val client = createSupabaseClient(url, anonKey) {
+    install(Auth)   // ← persistSession defaults to true
 }
-
-// With adaptive-ui — one component, works everywhere automatically
-ListDetailPaneScaffold(
-    listPane   = { AnimatedPane { ItemList(onItemClick = { navigator.navigateTo(Detail, it) }) } },
-    detailPane = { AnimatedPane { ItemDetail(navigator.currentDestination?.content) } }
-)
-// Phone: navigates between list and detail. Tablet: shows both side by side. Zero extra code.
-
-// With design-system — M3 Expressive tokens, dark mode correct, consistent everywhere
-Text("Title", style = MaterialTheme.typography.titleLarge)
-Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh))
+val user = client.auth.currentUserOrNull()  // ← returns null after hot restart
 ```
+
+Everything looked fine in development. The moment Sarkari Khozo users tried to call an Edge Function with their JWT, they got `UnauthorizedRestException`. Every time. 
+
+I described the error to the agent. It wrote a fix. The fix introduced a different bug. I described that. It fixed that. Three sessions of back-and-forth, hundreds of messages, just to discover one missing flag:
+
+```kotlin
+// The actual fix — one line
+install(Auth) {
+    persistSession = false   // ← without this, getUser() returns null
+}
+```
+
+Token waste: 3 full debugging sessions that shouldn't have happened.
+
+**Problem 3: Hilt compile errors that the agent couldn't read**
+
+Dagger error messages are famously cryptic. The agent would write `@Provides` where `@Binds` was needed, put a `@Singleton`-scoped dependency inside a narrower scope, or forget `@AndroidEntryPoint` on an Activity. The Dagger compile error would come back as 40 lines of incomprehensible text.
+
+The agent's response was to try a fix. Usually wrong. Try another fix. Still wrong. Third try, sometimes right. Sometimes it introduced a new error instead.
+
+For Sarkari Khozo, I had 6 Hilt modules. Getting them right took approximately 4 debugging cycles each.
+
+Token waste: 200-400 tokens per Hilt error that should have been avoided with the right pattern upfront.
+
+**Problem 4: `kapt` instead of `ksp` — every single time**
+
+Without fail, every new project the agent would write:
+
+```kotlin
+// What agents write without the gradle skill
+plugins {
+    kotlin("kapt")   // ← 2× slower than ksp, deprecated
+}
+kapt(libs.hilt.compiler)
+kapt(libs.room.compiler)
+```
+
+I'd catch it. Fix it. Next session, same thing. It wasn't learning because I wasn't teaching it systematically. So every new module = one kapt→ksp fix cycle.
+
+**Problem 5: `collectAsState()` instead of `collectAsStateWithLifecycle()`**
+
+This one doesn't just waste tokens — it wastes battery. The agent kept writing code that collected Flows even when the app was backgrounded. I'd explain the correct API. It'd write it right for that session. Next session: wrong again.
 
 ---
 
-## Quick install
+### The token math
 
-### 🤖 If you are an AI agent — fetch and follow
+By month 3 of building Sarkari Khozo, I did a rough calculation:
 
-Paste the instruction for your platform into your agent, and it will self-install:
+| Repeating waste per session | Avg tokens | Sessions/month |
+|---|---|---|
+| Re-explaining color/spacing system | ~1,000 | 20 |
+| Debugging Supabase auth from scratch | ~2,500 | 3 |
+| Fixing Hilt errors that should've been right | ~400 | 8 |
+| kapt→ksp correction cycle | ~200 | 10 |
+| collectAsState → lifecycle fix | ~150 | 15 |
+| Wrong UiState pattern (no loading/error/empty states) | ~800 | 12 |
+
+**That's roughly 50,000+ tokens/month in pure waste.** Not building new features. Just correcting the same mistakes over and over because the agent had no memory of the right patterns.
+
+My billing was 5× what it should have been. I hit token limit alerts constantly. I started dreading opening the project.
+
+---
+
+## The fix — FitGenZ AI shipped in 18 days, 5× lower bills
+
+After Sarkari Khozo taught me what was broken, I spent 2 weeks writing down every pattern the agent needed to know — as skills it could read automatically.
+
+Then I started **FitGenZ AI** — a Gen-Z fitness app with AI food tracking, calorie goals, streak tracking, and an AI coach. Way more complex than Sarkari Khozo.
+
+**It shipped in 18 days. My billing dropped by 5×.**
+
+Not because I got faster. Because the agent stopped making the same mistakes.
+
+The first session, instead of re-explaining my design system, I just built. The agent read `design-system` and applied the right spacing, the right typography, the right surface colors automatically.
+
+When I integrated Supabase auth, it worked first try. No `UnauthorizedRestException`. No 3-session debugging spiral.
+
+When I set up Hilt, the modules were right. `@Binds` where it should be `@Binds`. `ksp` in every build file.
+
+When I needed `StateFlow` collected in the UI, it wrote `collectAsStateWithLifecycle()`. Without being asked.
+
+Every screen looked like it belonged in the same app. Because the design tokens were consistent across every composable.
+
+---
+
+## Install in 30 seconds
+
+### 🤖 If you're an AI agent — self-install
+
+Paste the right instruction into your agent and it will install everything automatically:
 
 **Claude Code:**
 ```
-Fetch and follow the instructions at:
-https://raw.githubusercontent.com/piyushverma0/android-agent-skills/main/.claude/INSTALL.md
+Fetch and follow: https://raw.githubusercontent.com/piyushverma0/android-agent-skills/main/.claude/INSTALL.md
 ```
 
 **OpenAI Codex:**
 ```
-Fetch and follow the instructions at:
-https://raw.githubusercontent.com/piyushverma0/android-agent-skills/main/.codex/INSTALL.md
+Fetch and follow: https://raw.githubusercontent.com/piyushverma0/android-agent-skills/main/.codex/INSTALL.md
 ```
 
 **Cursor:**
 ```
-Fetch and follow the instructions at:
-https://raw.githubusercontent.com/piyushverma0/android-agent-skills/main/.cursor/INSTALL.md
+Fetch and follow: https://raw.githubusercontent.com/piyushverma0/android-agent-skills/main/.cursor/INSTALL.md
 ```
 
 **Antigravity:**
 ```
-Fetch and follow the instructions at:
-https://raw.githubusercontent.com/piyushverma0/android-agent-skills/main/.antigravity/INSTALL.md
+Fetch and follow: https://raw.githubusercontent.com/piyushverma0/android-agent-skills/main/.antigravity/INSTALL.md
 ```
 
-**Any other agent — universal instruction:**
+**Any other agent:**
 ```
 Fetch https://raw.githubusercontent.com/piyushverma0/android-agent-skills/main/AGENTS.md
 and follow the installation instructions for your platform.
@@ -122,51 +173,48 @@ and follow the installation instructions for your platform.
 
 ---
 
-### 👨‍💻 If you are a developer — CLI install
+### 👨‍💻 Developer — CLI
 
 ```bash
-# All 27 skills, works across all your Android projects (recommended)
+# Global install — all 27 skills, all your Android projects
 npx android-agent-skills install --global
 
 # Just this project
 npx android-agent-skills install
 
-# Only specific skills
-npx android-agent-skills install --skills adaptive-ui,design-system,android-testing
+# Specific skills only
+npx android-agent-skills install --skills design-system,supabase-android,hilt-di
 
 # For a specific agent
 npx android-agent-skills install --agent claude-code
 npx android-agent-skills install --agent codex
 npx android-agent-skills install --agent cursor
-npx android-agent-skills install --agent antigravity
-npx android-agent-skills install --agent gemini
-npx android-agent-skills install --agent '*'     # every agent at once
+npx android-agent-skills install --agent '*'
 
-# Keep skills updated
+# Update
 npx android-agent-skills update
 ```
 
 ---
 
-### 🔧 Manual install — no CLI, no tools needed
+### 🔧 Manual — no tools needed
 
 ```bash
-# Clone the repo
 git clone --depth=1 https://github.com/piyushverma0/android-agent-skills.git
 
-# Pick your agent and copy
-cp -r android-agent-skills/skills/* ~/.claude/skills/     # Claude Code (global)
-cp -r android-agent-skills/skills/* .claude/skills/       # Claude Code (project)
-cp -r android-agent-skills/skills/* ~/.codex/skills/      # Codex
-cp -r android-agent-skills/skills/* ~/.cursor/skills/     # Cursor
-cp -r android-agent-skills/skills/* .github/skills/       # GitHub Copilot
+# Copy to your agent — pick one
+cp -r android-agent-skills/skills/* ~/.claude/skills/   # Claude Code (global)
+cp -r android-agent-skills/skills/* .claude/skills/     # Claude Code (project)
+cp -r android-agent-skills/skills/* ~/.codex/skills/    # Codex
+cp -r android-agent-skills/skills/* ~/.cursor/skills/   # Cursor
+cp -r android-agent-skills/skills/* .github/skills/     # Copilot / universal
 ```
 
 ---
 
-### 📂 Where skills go — by agent
+### 📂 Install paths by agent
 
-| Agent | Global install path | Project-level path |
+| Agent | Global | Project |
 |---|---|---|
 | Claude Code | `~/.claude/skills/` | `.claude/skills/` |
 | OpenAI Codex | `~/.codex/skills/` | `.codex/skills/` |
@@ -179,210 +227,348 @@ cp -r android-agent-skills/skills/* .github/skills/       # GitHub Copilot
 
 ---
 
-### ✅ Verify the install worked
+### ✅ Verify it worked
 
 Open a new session and type:
 
 ```
-Create a screen with a list and a detail view that works on tablets too
+Add Supabase auth with email/password to my Android app
 ```
 
-Your agent should automatically use `adaptive-ui` + `compose-ui` + `android-architecture` — building a `ListDetailPaneScaffold` with proper `UiState`, `innerPadding`, and `collectAsStateWithLifecycle`. No extra prompting from you.
+The agent should automatically apply `supabase-android` + `hilt-di` + `android-architecture` — writing `persistSession = false`, the correct `getUser(jwt)` pattern, a Hilt module with `@Binds`, and a sealed `AuthState` — without you explaining any of it.
 
 ---
 
-## How the skills work
+## What these skills fix — the real problems
 
-### Automatic — no prompting needed
+### 🔴 Design inconsistency — the silent token killer
 
-Each skill has a `description` field with exact trigger keywords. When you give the agent a task, it reads all installed skill descriptions and automatically loads the ones that match. You never need to say "use the skill."
+Without the `design-system` skill, agents write this across your codebase:
 
-```
-You type:    "Create a sign-in screen with email and password"
+```kotlin
+// Screen 1 — HomeScreen.kt
+Text("Title", fontSize = 20.sp, color = Color(0xFF1A1A2E))
+Card(modifier = Modifier.padding(12.dp))
 
-Agent reads: compose-ui description → matches "@Composable, TextField"
-             android-architecture → matches "ViewModel, UiState"
-             hilt-di → matches "@HiltViewModel"
-             design-system → matches "AppTextField, AppButton"
+// Screen 2 — ProfileScreen.kt (different session)
+Text("Title", fontSize = 18.sp, color = Color(0xFF161622))  // slightly different!
+Card(modifier = Modifier.padding(16.dp))                     // different padding!
 
-Agent loads: All four skills simultaneously
-
-Agent writes: Correct Scaffold + TextField + PasswordVisualTransformation +
-              sealed UiState + @HiltViewModel + AppTextField/AppButton components
-              Dark mode correct. Loading state. Error state. No !! operators.
-```
-
-### Progressive loading — no context penalty
-
-```
-Level 1: skill name + description  →  always in context (≈50 tokens per skill)
-Level 2: full SKILL.md body        →  loaded when triggered (≈2,000 tokens)
-Level 3: references/ files         →  loaded on demand, only when needed
+// Screen 3 — SettingsScreen.kt (yet another session)
+Text("Title", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+Box(modifier = Modifier.padding(14.dp))                      // 14dp?? where did this come from
 ```
 
-All 27 skills at Level 1 costs about **1,350 tokens total**. No performance impact.
+Every session starts with zero visual memory. The agent doesn't know what your last screen looked like.
 
-### Manual invoke — when you want to be explicit
+With `design-system`, the agent reads these tokens once and applies them everywhere:
 
+```kotlin
+// Every screen, every session — consistent
+Text("Title", style = MaterialTheme.typography.titleLarge)
+AppCard { content() }  // always the same padding, shape, surface color
+Spacer(Modifier.height(Spacing.md))  // always 16dp
 ```
-/compose-ui          ← Claude Code slash command
-/adaptive-ui
-/android-testing
 
-# Or in a prompt:
-"Using the design-system skill, build a consistent button component for my app"
-"Apply android-testing to write tests for this ViewModel"
+No re-explaining. No inconsistent screens. No cleanup pass at the end.
+
+---
+
+### 🔴 Supabase `UnauthorizedRestException` — the production crash
+
+Without `supabase-android`, agents write this:
+
+```kotlin
+// Looks fine in dev, breaks in production
+val client = createSupabaseClient(url, anonKey) {
+    install(Auth)  // persistSession = true by default
+}
+// After hot restart: currentUserOrNull() returns null
+// JWT passed to Edge Function: UnauthorizedRestException
+```
+
+Your users see crashes. You spend hours debugging. The agent tries 3 different fixes before finding the right one.
+
+With `supabase-android`, the agent writes this the first time:
+
+```kotlin
+// Correct — no debugging session needed
+val client = createSupabaseClient(url, anonKey) {
+    install(Auth) {
+        persistSession = false   // required when passing JWT to Edge Functions
+    }
+}
+val user = client.auth.getUser(jwt)  // pass jwt directly
 ```
 
 ---
 
-## The 27 skills — what each one covers
+### 🔴 Hilt compile errors — the 3-try debugging loop
 
-### Tier 1 — Foundation
+Without `hilt-di`, agents write:
 
-These are the base skills. Every Android project needs all five.
+```kotlin
+// ❌ @Provides where @Binds is needed — slower, causes issues
+@Module
+@InstallIn(SingletonComponent::class)
+object RepositoryModule {
+    @Provides @Singleton
+    fun provideRepo(impl: ItemRepositoryImpl): ItemRepository = impl
+}
 
-| Skill | File it helps with | What it fixes |
+// ❌ Wrong scope — Singleton injected into ActivityScoped = Dagger crash
+@ActivityScoped
+class SomeViewModel @Inject constructor(
+    private val repo: ItemRepository  // @Singleton — scope mismatch
+)
+```
+
+With `hilt-di`, the agent writes it right the first time:
+
+```kotlin
+// ✅ @Binds — correct, efficient, no scope mismatch
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class RepositoryModule {
+    @Binds @Singleton
+    abstract fun bindRepo(impl: ItemRepositoryImpl): ItemRepository
+}
+```
+
+---
+
+### 🔴 `kapt` in 2026 — the slow build loop
+
+Without `gradle`, agents still write `kapt` in 2026:
+
+```kotlin
+// ❌ Every session, every new module
+plugins { kotlin("kapt") }
+kapt(libs.hilt.compiler)
+kapt(libs.room.compiler)
+// Builds 2× slower. Deprecated. Causes issues with newer Kotlin.
+```
+
+With `gradle`:
+
+```kotlin
+// ✅ Always ksp — first time, every time
+plugins { alias(libs.plugins.ksp) }
+ksp(libs.hilt.compiler)
+ksp(libs.room.compiler)
+```
+
+---
+
+### 🔴 Missing UiState states — the invisible crash
+
+Without `compose-ui`, agents write:
+
+```kotlin
+// ❌ No loading state, no error state, no empty state
+@Composable
+fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
+    val items by viewModel.items.collectAsState()  // ← wrong API, no lifecycle
+    LazyColumn {
+        items(items) { ItemCard(it) }
+    }
+    // What shows while items are loading? Nothing. Blank screen.
+    // What shows if loading fails? Nothing. Blank screen.
+    // What shows if items list is empty? Nothing. Blank screen.
+}
+```
+
+With `compose-ui`:
+
+```kotlin
+// ✅ Every state handled, correct API
+val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+when (uiState) {
+    is Loading -> AppLoadingScreen()
+    is Empty   -> AppEmptyScreen("No items yet", "Add your first item to get started")
+    is Success -> ItemList(uiState.items)
+    is Error   -> AppErrorScreen(uiState.message, onRetry = viewModel::load)
+}
+```
+
+---
+
+### 🔴 `Room` without migrations — silent data loss
+
+Without `room-database`, agents write:
+
+```kotlin
+// ❌ destroys user data on every schema change
+Room.databaseBuilder(context, AppDatabase::class.java, "db")
+    .fallbackToDestructiveMigration()  // ← wipes database when schema changes
+    .build()
+```
+
+With `room-database`:
+
+```kotlin
+// ✅ Explicit migrations — user data is safe
+Room.databaseBuilder(context, AppDatabase::class.java, "db")
+    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+    .build()
+```
+
+---
+
+### 🔴 No tests — the Play Store rejection risk
+
+Without `android-testing`, agents ship with zero tests. Play Store doesn't reject you for this directly, but your crash rate will be high enough to trigger policy review. Also: every refactor breaks something and you don't know it until users report it.
+
+With `android-testing`, the agent writes `FakeItemRepository`, `MainDispatcherRule`, and ViewModel tests alongside the feature — not as an afterthought.
+
+---
+
+## The 27 skills — what each one does
+
+### Tier 1 — Foundation (fixes the most expensive mistakes)
+
+| Skill | What it fixes | Where it applies |
 |---|---|---|
-| [`android-setup`](skills/android-setup/SKILL.md) | `build.gradle.kts`, `settings.gradle.kts`, `libs.versions.toml`, `AndroidManifest.xml` | KSP not kapt, version catalog, correct minSdk/targetSdk/compileSdk = 35, `enableEdgeToEdge()` |
-| [`compose-ui`](skills/compose-ui/SKILL.md) | Every `@Composable` function, any screen file | Scaffold innerPadding ignored, `collectAsState` vs `collectAsStateWithLifecycle`, no UiState, missing loading/error/empty states |
-| [`android-architecture`](skills/android-architecture/SKILL.md) | `ViewModel.kt`, `Repository.kt`, `UseCase.kt`, `UiState.kt` | ViewModel calling Room directly, DTOs leaking to UI, business logic in Composable, no Result<T> |
-| [`hilt-di`](skills/hilt-di/SKILL.md) | Every `@Module`, `@HiltViewModel`, `@AndroidEntryPoint` class | `@Provides` when `@Binds` is right, wrong scopes, `kapt` instead of `ksp`, Dagger compile errors |
-| [`kotlin-patterns`](skills/kotlin-patterns/SKILL.md) | Any `.kt` file with coroutines, Flow, or data modeling | `GlobalScope`, `!!` operator, `try/catch` in ViewModel, `var` in data class, wrong dispatcher |
+| [`android-setup`](skills/android-setup/SKILL.md) | Wrong SDK versions, `kapt` instead of `ksp`, no version catalog | `build.gradle.kts`, `settings.gradle.kts`, `libs.versions.toml` |
+| [`compose-ui`](skills/compose-ui/SKILL.md) | Missing UiState states, `collectAsState()` instead of lifecycle-aware, Scaffold padding ignored | Every `@Composable` screen file |
+| [`android-architecture`](skills/android-architecture/SKILL.md) | DTOs leaking to UI, ViewModel calling Room directly, no `Result<T>` | `ViewModel.kt`, `Repository.kt`, `UseCase.kt` |
+| [`hilt-di`](skills/hilt-di/SKILL.md) | `@Provides` vs `@Binds`, scope errors, Dagger compile errors | Every `@Module`, `@HiltViewModel`, `@AndroidEntryPoint` |
+| [`kotlin-patterns`](skills/kotlin-patterns/SKILL.md) | `GlobalScope`, `!!` operator, wrong dispatcher, `var` in data class | Any `.kt` file with coroutines or Flow |
 
----
+### Tier 2 — UI System (consistency across every screen)
 
-### Tier 2 — UI System ★ the moat
-
-This is what no other Android skills repo covers. I built these because AI agents in 2026 still build phone-only apps on a platform with 1B+ large-screen devices — and because every AI-built app looks like five different designers worked on it.
-
-| Skill | File it helps with | What it fixes |
+| Skill | What it fixes | Where it applies |
 |---|---|---|
-| [`adaptive-ui`](skills/adaptive-ui/SKILL.md) | Every screen, `MainActivity.kt`, `AppNavHost.kt` | Phone-only layouts, no `NavigationSuiteScaffold`, no `ListDetailPaneScaffold`, broken tablet UI, ignoring foldables |
-| [`design-system`](skills/design-system/SKILL.md) | `AppTheme.kt`, `DesignTokens.kt`, `AppButton.kt`, `AppCard.kt`, `AppTextField.kt` | Hardcoded `13.dp` spacing, `fontSize = 20.sp`, `Color(0xFF333333)`, no dark mode, no M3 Expressive motion tokens |
-| [`material3`](skills/material3/SKILL.md) | Any screen using M3 components | Wrong M3 APIs, drop shadows instead of tonal elevation, M2 components mixed with M3, missing scroll behavior on `LargeTopAppBar` |
-| [`compose-navigation`](skills/compose-navigation/SKILL.md) | `Routes.kt`, `AppNavHost.kt` | String routes, no `@Serializable` types, missing `launchSingleTop`, no shared element transitions, no predictive back |
-| [`compose-animation`](skills/compose-animation/SKILL.md) | Any animated component, `Shimmer.kt`, loading states | `tween(300)` for spatial motion (should be spring), no skeleton loading, no `AnimatedContent` on state transitions |
+| [`design-system`](skills/design-system/SKILL.md) | Different spacing/colors/typography per screen, no dark mode, hardcoded values | `AppTheme.kt`, `DesignTokens.kt`, every component |
+| [`adaptive-ui`](skills/adaptive-ui/SKILL.md) | No `NavigationSuiteScaffold`, broken layouts on different screen sizes | Every screen, `AppNavHost.kt` |
+| [`material3`](skills/material3/SKILL.md) | Wrong M3 APIs, M2 components mixed in, drop shadows instead of tonal elevation | Any M3 component usage |
+| [`compose-navigation`](skills/compose-navigation/SKILL.md) | String routes, no type safety, broken back navigation | `Routes.kt`, `AppNavHost.kt` |
+| [`compose-animation`](skills/compose-animation/SKILL.md) | No skeleton loading, no transition animations, `tween(300)` for everything | Any animated screen |
 
----
+### Tier 3 — Data Layer (no more production crashes)
 
-### Tier 3 — Data Layer
-
-| Skill | File it helps with | What it fixes |
+| Skill | What it fixes | Where it applies |
 |---|---|---|
-| [`room-database`](skills/room-database/SKILL.md) | `@Entity`, `@Dao`, `@Database`, migration files | `@Insert` without `OnConflictStrategy`, no `@Upsert`, missing migrations, `kapt` instead of `ksp` for Room compiler |
-| [`retrofit`](skills/retrofit/SKILL.md) | `ApiService.kt`, `NetworkModule.kt`, DTO classes | Non-suspend functions, catching generic `Exception`, no `ignoreUnknownKeys`, hardcoded base URL, no timeout |
-| [`datastore`](skills/datastore/SKILL.md) | `UserPreferencesRepository.kt`, `DataStoreModule.kt` | Using `SharedPreferences` in new code, multiple DataStore instances, no corruption handler |
-| [`offline-first`](skills/offline-first/SKILL.md) | Repository sync logic, `NetworkMonitor.kt`, `SyncWorker.kt` | UI showing network response directly, no optimistic updates, no retry logic, clearing cache on every refresh |
-
----
+| [`room-database`](skills/room-database/SKILL.md) | `fallbackToDestructiveMigration`, no `@Upsert`, `kapt` for Room compiler | `@Entity`, `@Dao`, `@Database` files |
+| [`retrofit`](skills/retrofit/SKILL.md) | Non-suspend functions, untyped errors, hardcoded base URL | `ApiService.kt`, `NetworkModule.kt` |
+| [`datastore`](skills/datastore/SKILL.md) | `SharedPreferences` in new code, multiple instances, no corruption handler | `UserPreferencesRepository.kt` |
+| [`offline-first`](skills/offline-first/SKILL.md) | UI showing network response directly, no cache fallback, no retry | Repository sync logic |
 
 ### Tier 4 — Platform Features
 
-| Skill | File it helps with | What it fixes |
+| Skill | What it fixes | Where it applies |
 |---|---|---|
-| [`firebase`](skills/firebase/SKILL.md) | `FirebaseModule.kt`, `AuthRepository.kt`, Firestore queries | No BoM, missing `.await()`, Firestore without offline persistence, missing security rules |
-| [`permissions`](skills/permissions/SKILL.md) | Any screen requesting camera/location/mic/notifications | No rationale, permanently denied not handled, background location before foreground |
-| [`notifications`](skills/notifications/SKILL.md) | `NotificationHelper.kt`, `MyFirebaseMessagingService.kt` | Channel not created, wrong `PendingIntent` flags, no `POST_NOTIFICATIONS` check on Android 13+ |
-| [`camerax`](skills/camerax/SKILL.md) | Camera preview screen, QR scanner | Not unbinding before rebinding, `ImageProxy` not closed, wrong executor for `takePicture` |
-| [`biometrics`](skills/biometrics/SKILL.md) | `MainActivity.kt` biometric setup | `BiometricPrompt` created in Composable, `DEVICE_CREDENTIAL` + `setNegativeButtonText` crash |
-
----
+| [`supabase-android`](skills/supabase-android/SKILL.md) | `UnauthorizedRestException`, `persistSession` bug, wrong JWT pattern | `SupabaseModule.kt`, auth code |
+| [`firebase`](skills/firebase/SKILL.md) | No BoM, missing `.await()`, no offline persistence | `FirebaseModule.kt`, Firestore queries |
+| [`permissions`](skills/permissions/SKILL.md) | No rationale dialog, permanent deny not handled | Any permission request screen |
+| [`notifications`](skills/notifications/SKILL.md) | Channel not created, wrong `PendingIntent` flags | `NotificationHelper.kt` |
+| [`camerax`](skills/camerax/SKILL.md) | `ImageProxy` not closed, wrong executor | Camera screen, QR scanner |
+| [`biometrics`](skills/biometrics/SKILL.md) | `BiometricPrompt` in Composable, wrong flags | `MainActivity.kt` biometric setup |
 
 ### Tier 5 — Quality & Security
 
-| Skill | File it helps with | What it fixes |
+| Skill | What it fixes | Where it applies |
 |---|---|---|
-| [`android-testing`](skills/android-testing/SKILL.md) | Every `*Test.kt` and `*ScreenTest.kt` file | No `MainDispatcherRule`, `runBlocking` in tests, mocking Repository instead of using Fake, no screenshot tests |
-| [`performance`](skills/performance/SKILL.md) | `@Stable`/`@Immutable` annotations, baseline profiles | `List<T>` instead of `ImmutableList<T>`, inline computation in composition, no baseline profile |
-| [`security`](skills/security/SKILL.md) | `SecureStorage.kt`, `network_security_config.xml`, `proguard-rules.pro` | API keys in `BuildConfig`, plain `SharedPreferences` for tokens, `android:allowBackup="true"` without rules |
-| [`accessibility`](skills/accessibility/SKILL.md) | Semantics modifiers, touch targets, TalkBack | Missing `contentDescription`, touch targets < 48dp, no `mergeDescendants`, color as only differentiator |
-| [`gradle`](skills/gradle/SKILL.md) | `build.gradle.kts`, `libs.versions.toml`, signing config | Versions hardcoded in build files, `kapt` everywhere, no `configuration-cache`, signing credentials committed |
-
----
+| [`android-testing`](skills/android-testing/SKILL.md) | No tests, no `MainDispatcherRule`, `runBlocking` in tests | Every `*Test.kt` file |
+| [`performance`](skills/performance/SKILL.md) | `List<T>` instead of stable list, computation in composition | `@Stable`/`@Immutable` annotations |
+| [`security`](skills/security/SKILL.md) | API keys in `BuildConfig`, plain `SharedPreferences` for tokens | `SecureStorage.kt`, build config |
+| [`accessibility`](skills/accessibility/SKILL.md) | Missing `contentDescription`, no semantics | Semantics modifiers on Composables |
+| [`gradle`](skills/gradle/SKILL.md) | Versions hardcoded, `kapt`, no build cache | All `build.gradle.kts` files |
 
 ### Tier 6 — Release
 
-| Skill | File it helps with | What it fixes |
+| Skill | What it fixes | Where it applies |
 |---|---|---|
-| [`ci-cd-android`](skills/ci-cd-android/SKILL.md) | `.github/workflows/ci.yml` | No Gradle cache, APK instead of AAB, credentials in code, no test automation |
-| [`play-store-release`](skills/play-store-release/SKILL.md) | Release build config, Play Console | `isDebuggable = true` in release, forgot to increment `versionCode`, no Data Safety form |
-| [`supabase-android`](skills/supabase-android/SKILL.md) | `SupabaseModule.kt`, any `supabase-kt` call | Missing `persistSession = false`, `decodeSingle()` on list query, non-`@Serializable` DTOs |
+| [`ci-cd-android`](skills/ci-cd-android/SKILL.md) | No test automation, APK instead of AAB, credentials in code | `.github/workflows/ci.yml` |
+| [`play-store-release`](skills/play-store-release/SKILL.md) | `isDebuggable = true`, no Data Safety form, wrong `targetSdk` | Release build config |
 
 ---
 
-## Skill file structure — what's inside each skill
+## How skills work — no prompting needed
+
+Each skill has a `description` field with exact trigger keywords. The agent matches them automatically when it reads your task.
+
+```
+You type:   "Add Supabase login to my app"
+
+Agent sees: supabase-android → matches "Auth, persistSession, getUser(jwt)"
+            hilt-di          → matches "@HiltViewModel, @Module"
+            android-architecture → matches "ViewModel, UiState, Repository"
+
+Agent loads: All three skills
+
+Agent writes: persistSession = false, correct JWT flow, @Binds Hilt module,
+              sealed AuthState, no UnauthorizedRestException — first try
+```
+
+### Context cost — 27 skills in context, minimal impact
+
+```
+Level 1 (always active): skill name + description  ≈ 50 tokens each
+Level 2 (loads on trigger): full SKILL.md          ≈ 2,000 tokens
+Level 3 (loads on demand): references/             ≈ 500-1,500 tokens
+```
+
+All 27 skills at level 1 = ~1,350 tokens total — a rounding error in your context window. The full rules only load when triggered.
+
+### Manual invoke
+
+```
+/supabase-android     # Claude Code
+/hilt-di
+/android-testing
+
+# Or in a prompt:
+"Using the design-system skill, create a consistent card for this screen"
+```
+
+---
+
+## Skill file structure
 
 ```
 skills/<skill-name>/
-├── SKILL.md           ← what the agent reads when triggered
-│                         contains: rules, ✅ correct code, ❌ wrong code, anti-patterns
-├── metadata.json      ← version, author, min/target SDK
-├── rules/             ← individual rule source files (one per rule)
-│   └── rule-name.md   ← impact level + full code example
+├── SKILL.md           ← agent reads this on trigger
+│                        rules + ✅ correct code + ❌ wrong code + anti-patterns
+├── metadata.json      ← version, SDK targets
+├── rules/             ← individual rule source files
 └── references/        ← deep-dive files loaded only when needed
-    └── topic.md       ← e.g., side-effects.md, hilt-testing.md, flow-patterns.md
+    └── topic.md       ← e.g., hilt-testing.md, supabase-auth-patterns.md
 ```
-
-Every `SKILL.md` is under 500 lines. References are loaded on demand — no context bloat.
 
 ---
 
 ## Contributing
 
-Skills are plain Markdown. No build step. No toolchain. Just write and open a PR.
+These skills fix real mistakes from real projects. If you've built an Android app with AI and hit a recurring mistake that's not covered here — write the skill.
 
 ```bash
 git clone https://github.com/piyushverma0/android-agent-skills
 cd android-agent-skills
 
-# Create a new skill
 mkdir -p skills/your-skill-name/rules
 mkdir -p skills/your-skill-name/references
-
-# Write the skill following the format in AGENTS.md
-# Every SKILL.md needs: YAML frontmatter with name + description,
-# rules with ✅/❌ code pairs, and a "Common Mistakes" section
+# Write SKILL.md following the format in AGENTS.md
+# Every rule needs: ✅ correct, ❌ wrong, "Common Mistakes" section
 
 git checkout -b feat/your-skill-name
-# ... write your skill ...
 git commit -m "feat(your-skill-name): add skill"
-git push
-# Open PR
+git push && open PR
 ```
 
-### Skills I need help building
+**Skills I need most:**
+`room-paging` · `maps-compose` · `in-app-purchase` · `widgets-glance` · `media3-player` · `mlkit-text-recognition` · `workmanager-advanced` · `bluetooth-le`
 
-These are the biggest gaps right now:
-
-`room-paging` · `maps-compose` · `in-app-purchase` · `widgets-glance` · `media3-player` · `wear-os` · `compose-multiplatform` · `android-shortcuts` · `navigation-bar-customization` · `app-widgets` · `mlkit-text-recognition` · `bluetooth-le`
-
-If you've debugged one of these and know what AI agents get wrong — please write the skill. That's exactly the knowledge this repo needs.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for format and quality checklist.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for format requirements.
 
 ---
 
-## Why this exists — the real reason
-
-There are 88,000+ agent skills published globally. Zero dedicated to production Android/Kotlin.
-
-I built this because I was building [FitGenZ](https://github.com/piyushverma0) — a Gen-Z fitness app — and Claude Code kept making the same mistakes. Every session. Edge-to-edge not handled. `collectAsState` instead of the lifecycle-aware version. Tablets looking completely different from the phone layout. No dark mode consistency.
-
-I started writing the rules down. Then I packaged them as skills. Then I realized every Android developer using AI agents has this problem — and nobody had solved it.
-
-So now it's a repo. If it helps you ship better Android apps, star it. If you find a rule that's wrong, open an issue. If you know a skill that should exist, write it.
-
-That's it.
-
----
-
-## Updating skills
+## Updates
 
 ```bash
 npx android-agent-skills update
 
-# Or manually:
+# Manual
 git clone --depth=1 https://github.com/piyushverma0/android-agent-skills.git /tmp/aas \
   && cp -r /tmp/aas/skills/* ~/.claude/skills/ \
   && rm -rf /tmp/aas
@@ -392,9 +578,10 @@ git clone --depth=1 https://github.com/piyushverma0/android-agent-skills.git /tm
 
 ## License
 
-MIT — use it in personal projects, commercial projects, client projects. Do whatever you want with it.
+MIT.
 
 ---
 
-*Built by [Piyush Verma](https://github.com/piyushverma0) — solo Android builder from Banda, UP.*  
-*I build complete apps with AI agents. This is how I make them production-ready.*
+*Built by [Piyush Verma](https://github.com/piyushverma0).*  
+*Solo Android builder from Banda, UP.*  
+*I got tired of 5× token bills. So I fixed the problem.*

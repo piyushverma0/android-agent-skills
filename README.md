@@ -18,11 +18,11 @@
 
 ---
 
-## The honest story — Sarkari Khozo broke my budget
+## The honest story — Seekho AI broke my budget
 
 I'm Piyush. I build Android apps solo using AI agents — Claude Code, Codex, Cursor, Antigravity.
 
-My first serious Android project was **Sarkari Khozo** — an app that helps Indians find government schemes, exam notifications, and jobs. The idea was solid. The execution was a nightmare.
+My first serious Android project was **Seekho AI** — an app that helps Indians find government schemes, exam notifications, and jobs. The idea was solid. The execution was a nightmare.
 
 Every AI session started the same way. I'd describe what I wanted. The agent would start building. And within 20 minutes, I was correcting the same mistakes I'd corrected the session before.
 
@@ -54,7 +54,7 @@ val client = createSupabaseClient(url, anonKey) {
 val user = client.auth.currentUserOrNull()  // ← returns null after hot restart
 ```
 
-Everything looked fine in development. The moment Sarkari Khozo users tried to call an Edge Function with their JWT, they got `UnauthorizedRestException`. Every time. 
+Everything looked fine in development. The moment Seekho AI users tried to call an Edge Function with their JWT, they got `UnauthorizedRestException`. Every time. 
 
 I described the error to the agent. It wrote a fix. The fix introduced a different bug. I described that. It fixed that. Three sessions of back-and-forth, hundreds of messages, just to discover one missing flag:
 
@@ -73,7 +73,7 @@ Dagger error messages are famously cryptic. The agent would write `@Provides` wh
 
 The agent's response was to try a fix. Usually wrong. Try another fix. Still wrong. Third try, sometimes right. Sometimes it introduced a new error instead.
 
-For Sarkari Khozo, I had 6 Hilt modules. Getting them right took approximately 4 debugging cycles each.
+For Seekho AI, I had 6 Hilt modules. Getting them right took approximately 4 debugging cycles each.
 
 Token waste: 200-400 tokens per Hilt error that should have been avoided with the right pattern upfront.
 
